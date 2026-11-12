@@ -18,7 +18,7 @@ services:
       - key: SCHOOL_NAME
         value: 동탄국제고 학부모 소통방
       - key: THEME_COLOR
-        value: "#1f3f7a"   # 학교 상징색으로 바꿔 쓰세요
+        value: "#d7263a"   # 동탄국제고 교표 빨강
       - key: ACCESS_CODE
         sync: false
       - key: ADMIN_PASSWORD

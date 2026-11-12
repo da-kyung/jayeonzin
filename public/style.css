@@ -1,8 +1,8 @@
 :root {
-  --brand: #1f3f7a;
+  --brand: #d7263a; --ink: #231f20;
   --brand-l: color-mix(in srgb, var(--brand) 12%, white);
   --brand-m: color-mix(in srgb, var(--brand) 25%, white);
-  --bg: #f2f3f1; --chat-bg: color-mix(in srgb, var(--brand) 7%, #eef0ee);
+  --bg: #f2f3f1; --chat-bg: color-mix(in srgb, var(--brand) 3%, #eceef0);
   --card: #fff; --text: #1d2420; --muted: #6f7873; --line: #e4e7e5; --red: #d0443a; --amber: #b7791f;
   --top-h: 56px; --nav-h: 64px;
 }
@@ -18,12 +18,12 @@ button { font: inherit; color: inherit; }
 #app { max-width: 680px; margin: 0 auto; min-height: calc(100vh - var(--top-h)); }
 
 /* 상단바 */
-.topbar { position: sticky; top: 0; z-index: 20; height: var(--top-h); display: flex; align-items: center; gap: 10px; padding: 0 12px; padding-top: env(safe-area-inset-top); background: var(--brand); color: #fff; }
-.topbar .logo { width: 32px; height: 32px; border-radius: 9px; background: #fff; object-fit: contain; padding: 2px; flex: none; }
+.topbar { position: sticky; top: 0; z-index: 20; height: var(--top-h); display: flex; align-items: center; gap: 10px; padding: 0 12px; padding-top: env(safe-area-inset-top); background: #fff; color: var(--ink); border-bottom: 1px solid var(--line); }
+.topbar .logo { width: 30px; height: 30px; object-fit: contain; flex: none; }
 .top-title { flex: 1; font-weight: 700; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .top-right { display: flex; align-items: center; gap: 6px; }
 .icon-btn { border: 0; background: none; color: inherit; font-size: 22px; line-height: 1; padding: 6px 8px; cursor: pointer; border-radius: 8px; }
-.icon-btn:active { background: rgba(255,255,255,.15); }
+.icon-btn:active { background: rgba(0,0,0,.06); }
 
 /* 하단 메뉴바 */
 .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; justify-content: space-around; height: calc(var(--nav-h) + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); background: #fff; border-top: 1px solid var(--line); }
@@ -52,7 +52,7 @@ textarea.input { resize: vertical; }
 .tag.pin { background: #fff4d6; color: var(--amber); } .tag.warn { background: #fdecec; color: var(--red); }
 .cat-notice { background: var(--brand); color: #fff; } .cat-question { background: #e5efff; color: #2563a8; }
 .cat-suggestion { background: #fff0e5; color: #b4541b; } .cat-admission { background: #e3f6f1; color: #0f7a63; } .cat-info { background: #efe9ff; color: #6640c0; }
-.badge.admin { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #fff; color: var(--brand); }
+.badge.admin { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--brand); color: #fff; }
 .warn-text { color: var(--red); }
 .is-hidden { opacity: .55; }
 .hint { font-size: 13px; color: var(--muted); margin: 12px 16px 4px; }
@@ -62,6 +62,8 @@ textarea.input { resize: vertical; }
 .enter { text-align: center; padding: 60px 24px 30px; max-width: 420px; margin: 0 auto; }
 .enter-logo { width: 84px; height: 84px; border-radius: 24px; object-fit: contain; background: #fff; padding: 6px; box-shadow: 0 6px 20px rgba(0,0,0,.08); }
 .enter h1 { font-size: 22px; margin: 16px 0 4px; }
+.enter-logo-full { width: 210px; max-width: 70%; display: block; margin: 0 auto 8px; }
+.enter-logo-full + h1 { font-size: 20px; color: var(--muted); font-weight: 600; margin-top: 6px; }
 .promise { text-align: left; list-style: none; padding: 16px; margin: 24px 0 0; background: #fff; border-radius: 14px; font-size: 14px; }
 .promise li { margin: 5px 0; }
 

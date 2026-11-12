@@ -19,7 +19,7 @@ const CONFIG = {
   dataDir: process.env.DATA_DIR || path.join(__dirname, 'data'),
   reportHideThreshold: Number(process.env.REPORT_HIDE_THRESHOLD || 3),
   secureCookie: process.env.SECURE_COOKIE === '1',
-  themeColor: /^#[0-9a-fA-F]{6}$/.test(process.env.THEME_COLOR || '') ? process.env.THEME_COLOR : '#1f3f7a', // 학교 상징색 (기본: 남색)
+  themeColor: /^#[0-9a-fA-F]{6}$/.test(process.env.THEME_COLOR || '') ? process.env.THEME_COLOR : '#d7263a', // 학교 상징색 (동탄국제고 교표 빨강 기반)
   logo: process.env.SCHOOL_LOGO || '', // public 폴더 안 로고 파일 경로 (예: /logo.png)
 };
 if (!CONFIG.logo) {
@@ -27,6 +27,8 @@ if (!CONFIG.logo) {
     if (fs.existsSync(path.join(__dirname, 'public', f))) { CONFIG.logo = '/' + f; break; }
   }
 }
+// 입장 화면용 전체 교표 (교명 포함)
+CONFIG.logoFull = process.env.SCHOOL_LOGO_FULL || (fs.existsSync(path.join(__dirname, 'public', 'logo-full.svg')) ? '/logo-full.svg' : '');
 
 const CATEGORIES = {
   notice: '공지',
@@ -275,7 +277,7 @@ const routes = [];
 const route = (method, pattern, handler, opts = {}) => routes.push({ method, re: new RegExp('^' + pattern.replace(/:(\w+)/g, '(?<$1>\\d+)') + '$'), handler, opts });
 
 route('GET', '/api/me', (req, res, s) => {
-  send(res, 200, { entered: !!s.clientId, admin: s.admin, schoolName: CONFIG.schoolName, categories: CATEGORIES, themeColor: CONFIG.themeColor, logo: CONFIG.logo });
+  send(res, 200, { entered: !!s.clientId, admin: s.admin, schoolName: CONFIG.schoolName, categories: CATEGORIES, themeColor: CONFIG.themeColor, logo: CONFIG.logo, logoFull: CONFIG.logoFull });
 }, { public: true });
 
 route('POST', '/api/enter', async (req, res, s, body, ip) => {

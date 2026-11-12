@@ -133,8 +133,10 @@ function viewEnter() {
   };
   render(
     h('section', { class: 'enter' },
-      h('img', { src: state.me.logo || '/icon.svg', alt: '', class: 'enter-logo' }),
-      h('h1', {}, state.me.schoolName),
+      state.me.logoFull
+        ? h('img', { src: state.me.logoFull, alt: state.me.schoolName, class: 'enter-logo-full' })
+        : h('img', { src: state.me.logo || '/icon.svg', alt: '', class: 'enter-logo' }),
+      h('h1', {}, state.me.logoFull ? '학부모 소통방' : state.me.schoolName),
       h('p', { class: 'muted' }, '학교에서 안내받은 입장 코드를 입력해주세요.'),
       h('form', { onsubmit: submit }, input, h('button', { class: 'btn primary block' }, '입장하기')),
       h('ul', { class: 'promise' },
@@ -458,9 +460,8 @@ const stat = (label, n) => h('div', { class: 'stat' }, h('b', {}, n), h('span', 
 
 // ---------- 테마 · 라우터 ----------
 function applyTheme() {
-  const c = state.me.themeColor || '#1f3f7a';
+  const c = state.me.themeColor || '#d7263a';
   document.documentElement.style.setProperty('--brand', c);
-  document.querySelector('meta[name="theme-color"]').setAttribute('content', c);
   document.title = state.me.schoolName;
 }
 

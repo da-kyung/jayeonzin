@@ -30,7 +30,7 @@ ACCESS_CODE=학부모입장코드 ADMIN_PASSWORD=운영자비번 SCHOOL_NAME="OO
 | `ACCESS_CODE` | 학부모 입장 코드 | `1234` (**반드시 변경**) |
 | `ADMIN_PASSWORD` | 운영자 비밀번호 | `admin1234` (**반드시 변경**) |
 | `SCHOOL_NAME` | 화면 상단 이름 | 동탄국제고 학부모 소통방 |
-| `THEME_COLOR` | 학교 상징색 (예: `#1e5aa8`) | `#1f3f7a` (남색) |
+| `THEME_COLOR` | 학교 상징색 (예: `#1e5aa8`) | `#d7263a` (교표 빨강) |
 | `SCHOOL_LOGO` | 로고 경로. `public/logo.png`(또는 .svg/.jpg/.webp)를 넣으면 자동 적용 | 기본 새싹 아이콘 |
 | `PORT` | 포트 | 3000 |
 | `DATA_DIR` | DB·비밀키 저장 폴더 | `./data` |
