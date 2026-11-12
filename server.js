@@ -655,7 +655,7 @@ const server = http.createServer(async (req, res) => {
 
 if (require.main === module) {
   news.start(Number(process.env.NEWS_INTERVAL_MIN || 30));
-  server.listen(CONFIG.port, () => {
+  server.listen(CONFIG.port, process.env.HOST || undefined, () => { // HOST=127.0.0.1 이면 내부(웹서버 경유)에서만 접근
     console.log(`[${CONFIG.schoolName}] http://localhost:${CONFIG.port}`);
     if (!process.env.ACCESS_CODE || !process.env.ADMIN_PASSWORD) {
       console.warn('⚠ ACCESS_CODE / ADMIN_PASSWORD 환경변수를 꼭 설정하세요. (현재 기본값 사용 중)');

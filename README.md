@@ -62,7 +62,16 @@ ACCESS_CODE=학부모입장코드 ADMIN_PASSWORD=운영자비번 SCHOOL_NAME="OO
 
 테스트: `npm test`
 
-## 인터넷에 올리기 (Render, 약 10분)
+## 인터넷에 올리기 — 네이버클라우드 (권장, 국내 서버)
+👉 **[deploy/네이버클라우드_설치안내.md](deploy/네이버클라우드_설치안내.md)** 를 따라 하세요. 서버 접속 후 한 줄이면 설치됩니다.
+```
+curl -fsSL https://raw.githubusercontent.com/da-kyung/jayeonzin/claude/school-parent-communication-app-8ao6z5/deploy/install.sh | bash
+```
+- 도메인이 없어도 `서버IP.sslip.io` 무료 주소 + HTTPS 자동 적용, 나중에 도메인으로 교체 가능
+- Node.js 22 · Caddy(HTTPS) · 자동 실행 · 매일 백업(14일) · 보안 업데이트 자동 적용
+- 업데이트: `bash /opt/board/deploy/update.sh` (실패 시 자동 복구)
+
+## 인터넷에 올리기 — Render (해외 서버, 학교 홈페이지 연동이 막힐 수 있음)
 1. https://render.com 가입 → GitHub 계정 연결
 2. **New + → Blueprint** 선택 → 이 저장소(`jayeonzin`)와 브랜치 선택
 3. 입력칸에 `ACCESS_CODE`(학부모 입장 코드), `ADMIN_PASSWORD`(운영자 비번) 입력 → **Apply**
