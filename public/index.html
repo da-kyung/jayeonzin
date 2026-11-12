@@ -2,23 +2,27 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
   <meta name="theme-color" content="#2f6f4f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>학부모 소통방</title>
   <link rel="icon" href="/icon.svg" />
+  <link rel="apple-touch-icon" href="/icon.svg" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <header class="topbar">
-    <a href="#/" class="brand" id="brand">학부모 소통방</a>
-    <div class="top-actions">
-      <span id="adminBadge" class="badge admin hidden">운영자</span>
-      <a href="#/admin" id="adminLink" class="icon-btn" title="운영자">⚙</a>
-    </div>
-  </header>
-  <main id="app" class="container"></main>
+  <header class="topbar" id="topbar"></header>
+  <main id="app"></main>
+  <nav class="bottom-nav hidden" id="bottomNav">
+    <a href="#/" data-tab="home"><i>💬</i><span>소통방</span></a>
+    <a href="#/notice" data-tab="notice"><i>📢</i><span>공지</span></a>
+    <a href="#/write" data-tab="write" class="write"><i>✏️</i><span>글쓰기</span></a>
+    <a href="#/mine" data-tab="mine"><i>🙋</i><span>내 활동</span></a>
+    <a href="#/more" data-tab="more"><i>☰</i><span>더보기</span></a>
+  </nav>
   <div id="toast" class="toast hidden"></div>
+  <div id="sheet" class="sheet-backdrop hidden"></div>
   <script src="/app.js"></script>
 </body>
 </html>

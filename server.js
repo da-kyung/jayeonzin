@@ -19,7 +19,14 @@ const CONFIG = {
   dataDir: process.env.DATA_DIR || path.join(__dirname, 'data'),
   reportHideThreshold: Number(process.env.REPORT_HIDE_THRESHOLD || 3),
   secureCookie: process.env.SECURE_COOKIE === '1',
+  themeColor: /^#[0-9a-fA-F]{6}$/.test(process.env.THEME_COLOR || '') ? process.env.THEME_COLOR : '#2f6f4f', // 학교 상징색
+  logo: process.env.SCHOOL_LOGO || '', // public 폴더 안 로고 파일 경로 (예: /logo.png)
 };
+if (!CONFIG.logo) {
+  for (const f of ['logo.png', 'logo.svg', 'logo.jpg', 'logo.webp']) {
+    if (fs.existsSync(path.join(__dirname, 'public', f))) { CONFIG.logo = '/' + f; break; }
+  }
+}
 
 const CATEGORIES = {
   notice: '공지',
@@ -110,6 +117,8 @@ function sanitizeText(text) {
 
 const ADJ = ['따뜻한', '부지런한', '다정한', '씩씩한', '차분한', '명랑한', '든든한', '포근한', '용감한', '상냥한', '슬기로운', '해맑은'];
 const NOUN = ['해바라기', '민들레', '다람쥐', '고래', '참새', '코스모스', '토끼', '펭귄', '소나무', '은행나무', '수달', '부엉이'];
+const EMOJI = { 해바라기: '🌻', 민들레: '🌼', 다람쥐: '🐿️', 고래: '🐋', 참새: '🐦', 코스모스: '🌸', 토끼: '🐰', 펭귄: '🐧', 소나무: '🌲', 은행나무: '🌳', 수달: '🦦', 부엉이: '🦉' };
+const avatarOf = (nickname) => EMOJI[String(nickname).split(' ').pop()] || '🙂';
 const randomNickname = () => `${ADJ[crypto.randomInt(ADJ.length)]} ${NOUN[crypto.randomInt(NOUN.length)]}`;
 
 // ---------------------------------------------------------------------------
@@ -232,6 +241,7 @@ function postView(p, s, { full = false } = {}) {
     body: full ? (hiddenForUser ? '운영자 검토 중인 글입니다.' : p.body) : undefined,
     preview: full || hiddenForUser ? undefined : p.body.slice(0, 80),
     nickname: p.is_admin ? '운영자' : p.nickname,
+    avatar: p.is_admin ? '🏫' : avatarOf(p.nickname),
     isAdmin: !!p.is_admin,
     pinned: !!p.pinned,
     hidden: !!p.hidden,
@@ -264,7 +274,7 @@ const routes = [];
 const route = (method, pattern, handler, opts = {}) => routes.push({ method, re: new RegExp('^' + pattern.replace(/:(\w+)/g, '(?<$1>\\d+)') + '$'), handler, opts });
 
 route('GET', '/api/me', (req, res, s) => {
-  send(res, 200, { entered: !!s.clientId, admin: s.admin, schoolName: CONFIG.schoolName, categories: CATEGORIES });
+  send(res, 200, { entered: !!s.clientId, admin: s.admin, schoolName: CONFIG.schoolName, categories: CATEGORIES, themeColor: CONFIG.themeColor, logo: CONFIG.logo });
 }, { public: true });
 
 route('POST', '/api/enter', async (req, res, s, body, ip) => {
@@ -296,6 +306,10 @@ route('GET', '/api/posts', (req, res, s, body, ip, params, url) => {
   const where = [];
   const args = [];
   if (category && CATEGORIES[category]) { where.push('category = ?'); args.push(category); }
+  if (url.searchParams.get('mine') === '1') {
+    where.push('(author_hash = ? OR id IN (SELECT post_id FROM comments WHERE author_hash = ?))');
+    args.push(s.authorHash, s.authorHash);
+  }
   if (q) { where.push('(title LIKE ? OR body LIKE ?) AND hidden = 0'); args.push(`%${q}%`, `%${q}%`); }
   const w = where.length ? 'WHERE ' + where.join(' AND ') : '';
   const order = sort === 'popular' ? 'pinned DESC, likes DESC, comment_count DESC, id DESC' : 'pinned DESC, id DESC';
