@@ -168,9 +168,10 @@ async function viewList(mode = 'home') {
     parts.push(h('div', { class: 'chips' },
       [['', '전체'], ...Object.entries(cats).filter(([k]) => k !== 'notice')].map(([k, v]) =>
         h('button', { class: 'chip' + (state.category === k ? ' active' : ''), onclick: () => { state.category = k; viewList(mode); } }, v)),
-      h('span', { class: 'spacer' }),
-      h('button', { class: 'chip ghost', onclick: () => { state.sort = state.sort === 'latest' ? 'popular' : 'latest'; viewList(mode); } }, state.sort === 'latest' ? '최신순 ⇅' : '공감순 ⇅'),
     ));
+    parts.push(h('div', { class: 'sort-row' },
+      [['latest', '최신순'], ['popular', '공감순']].map(([k, v]) =>
+        h('button', { class: state.sort === k ? 'on' : '', onclick: () => { state.sort = k; viewList(mode); } }, v))));
   }
   if (mode === 'mine') parts.push(h('p', { class: 'hint' }, '내가 쓴 글과 댓글 단 대화방이에요. 이 기기에서만 보여요.'));
 
@@ -457,7 +458,7 @@ const stat = (label, n) => h('div', { class: 'stat' }, h('b', {}, n), h('span', 
 
 // ---------- 테마 · 라우터 ----------
 function applyTheme() {
-  const c = state.me.themeColor || '#2f6f4f';
+  const c = state.me.themeColor || '#1f3f7a';
   document.documentElement.style.setProperty('--brand', c);
   document.querySelector('meta[name="theme-color"]').setAttribute('content', c);
   document.title = state.me.schoolName;

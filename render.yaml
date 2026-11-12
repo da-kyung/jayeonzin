@@ -1,7 +1,7 @@
 # Render.com 원클릭 배포 설정 (Blueprint)
 services:
   - type: web
-    name: school-parents-board
+    name: dtghs-parents
     runtime: node
     plan: starter          # 영구 디스크 사용을 위해 유료(Starter) 플랜 필요
     region: singapore      # 한국과 가장 가까운 리전
@@ -16,7 +16,9 @@ services:
       - key: SECURE_COOKIE
         value: "1"
       - key: SCHOOL_NAME
-        sync: false        # 배포 화면에서 입력
+        value: 동탄국제고 학부모 소통방
+      - key: THEME_COLOR
+        value: "#1f3f7a"   # 학교 상징색으로 바꿔 쓰세요
       - key: ACCESS_CODE
         sync: false
       - key: ADMIN_PASSWORD

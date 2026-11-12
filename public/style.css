@@ -1,5 +1,5 @@
 :root {
-  --brand: #2f6f4f;
+  --brand: #1f3f7a;
   --brand-l: color-mix(in srgb, var(--brand) 12%, white);
   --brand-m: color-mix(in srgb, var(--brand) 25%, white);
   --bg: #f2f3f1; --chat-bg: color-mix(in srgb, var(--brand) 7%, #eef0ee);
@@ -51,7 +51,7 @@ textarea.input { resize: vertical; }
 .tag { display: inline-block; flex: none; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 6px; background: #eef0ee; color: #4a554e; }
 .tag.pin { background: #fff4d6; color: var(--amber); } .tag.warn { background: #fdecec; color: var(--red); }
 .cat-notice { background: var(--brand); color: #fff; } .cat-question { background: #e5efff; color: #2563a8; }
-.cat-suggestion { background: #fff0e5; color: #b4541b; } .cat-info { background: #efe9ff; color: #6640c0; }
+.cat-suggestion { background: #fff0e5; color: #b4541b; } .cat-admission { background: #e3f6f1; color: #0f7a63; } .cat-info { background: #efe9ff; color: #6640c0; }
 .badge.admin { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #fff; color: var(--brand); }
 .warn-text { color: var(--red); }
 .is-hidden { opacity: .55; }
@@ -73,6 +73,10 @@ textarea.input { resize: vertical; }
 .chip { flex: none; border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 6px 14px; font-size: 14px; cursor: pointer; }
 .chip.active { background: var(--brand); color: #fff; border-color: var(--brand); font-weight: 700; }
 .chip.ghost { border-color: transparent; background: transparent; color: var(--muted); font-size: 13px; }
+.sort-row { display: flex; justify-content: flex-end; gap: 12px; padding: 0 16px 8px; margin-top: -4px; }
+.sort-row button { border: 0; background: none; padding: 0; font-size: 13px; color: var(--muted); cursor: pointer; }
+.sort-row button.on { color: var(--brand); font-weight: 700; }
+.sort-row button.on::before { content: "✓ "; }
 .pin-banner { display: flex; align-items: center; gap: 10px; margin: 0 12px 8px; padding: 11px 14px; background: var(--brand-l); border-radius: 12px; font-size: 14px; }
 .pin-banner span { flex: 1; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pin-banner i { font-style: normal; color: var(--muted); }

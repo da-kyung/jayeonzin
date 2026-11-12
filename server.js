@@ -13,13 +13,13 @@ const { DatabaseSync } = require('node:sqlite');
 // ---------------------------------------------------------------------------
 const CONFIG = {
   port: Number(process.env.PORT || 3000),
-  schoolName: process.env.SCHOOL_NAME || '우리학교 학부모 소통방',
+  schoolName: process.env.SCHOOL_NAME || '동탄국제고 학부모 소통방',
   accessCode: process.env.ACCESS_CODE || '1234', // 학부모 입장 코드 (가정통신문으로 안내)
   adminPassword: process.env.ADMIN_PASSWORD || 'admin1234', // 운영자(선생님) 비밀번호
   dataDir: process.env.DATA_DIR || path.join(__dirname, 'data'),
   reportHideThreshold: Number(process.env.REPORT_HIDE_THRESHOLD || 3),
   secureCookie: process.env.SECURE_COOKIE === '1',
-  themeColor: /^#[0-9a-fA-F]{6}$/.test(process.env.THEME_COLOR || '') ? process.env.THEME_COLOR : '#2f6f4f', // 학교 상징색
+  themeColor: /^#[0-9a-fA-F]{6}$/.test(process.env.THEME_COLOR || '') ? process.env.THEME_COLOR : '#1f3f7a', // 학교 상징색 (기본: 남색)
   logo: process.env.SCHOOL_LOGO || '', // public 폴더 안 로고 파일 경로 (예: /logo.png)
 };
 if (!CONFIG.logo) {
@@ -32,6 +32,7 @@ const CATEGORIES = {
   notice: '공지',
   free: '자유',
   question: '질문',
+  admission: '입시·진로',
   suggestion: '건의',
   info: '정보공유',
 };
