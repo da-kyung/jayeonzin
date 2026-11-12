@@ -1,0 +1,1 @@
+{ "name": "학부모 소통방", "short_name": "학부모방", "start_url": "/", "display": "standalone", "background_color": "#f6f7f5", "theme_color": "#2f6f4f", "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }] }

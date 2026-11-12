@@ -1,0 +1,12 @@
+{
+  "name": "school-parents-board",
+  "version": "1.0.0",
+  "description": "학부모 익명 소통 게시판 (의존성 없는 Node.js 웹앱)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --no-warnings server.js",
+    "test": "node --no-warnings --test test/*.test.js"
+  },
+  "engines": { "node": ">=22.13" },
+  "license": "MIT"
+}
