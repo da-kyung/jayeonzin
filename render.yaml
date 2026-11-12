@@ -1,0 +1,27 @@
+# Render.com 원클릭 배포 설정 (Blueprint)
+services:
+  - type: web
+    name: school-parents-board
+    runtime: node
+    plan: starter          # 영구 디스크 사용을 위해 유료(Starter) 플랜 필요
+    region: singapore      # 한국과 가장 가까운 리전
+    buildCommand: echo "no build step"
+    startCommand: npm start
+    healthCheckPath: /api/me
+    envVars:
+      - key: NODE_VERSION
+        value: "22.13.0"
+      - key: DATA_DIR
+        value: /var/data
+      - key: SECURE_COOKIE
+        value: "1"
+      - key: SCHOOL_NAME
+        sync: false        # 배포 화면에서 입력
+      - key: ACCESS_CODE
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+    disk:
+      name: board-data
+      mountPath: /var/data
+      sizeGB: 1

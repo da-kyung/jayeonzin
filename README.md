@@ -32,10 +32,19 @@ ACCESS_CODE=학부모입장코드 ADMIN_PASSWORD=운영자비번 SCHOOL_NAME="OO
 
 테스트: `npm test`
 
-## 배포 팁
-- Render, Railway, Fly.io 등 Node 호스팅에 그대로 올리면 됩니다. **`data/` 폴더는 영구 디스크(Volume)에 연결**해야 글이 유지됩니다.
-- HTTPS 환경에서는 `SECURE_COOKIE=1` 설정.
-- 휴대폰에서 "홈 화면에 추가"하면 앱처럼 사용할 수 있습니다.
+## 인터넷에 올리기 (Render, 약 10분)
+1. https://render.com 가입 → GitHub 계정 연결
+2. **New + → Blueprint** 선택 → 이 저장소(`jayeonzin`)와 브랜치 선택
+3. 입력칸에 `SCHOOL_NAME`, `ACCESS_CODE`(학부모 입장 코드), `ADMIN_PASSWORD`(운영자 비번) 입력 → **Apply**
+4. 몇 분 뒤 `https://school-parents-board-xxxx.onrender.com` 주소가 생깁니다 → 가정통신문에 안내
+   - 비용: Starter 플랜 월 약 $7 + 디스크 1GB 약 $0.25 (글이 지워지지 않도록 영구 디스크 포함)
+   - 원하면 Settings → Custom Domain에서 `talk.학교도메인` 같은 주소 연결 가능
+
+그 외 호스팅: `Dockerfile`이 있어 Railway, Fly.io, 학교/회사 서버 어디든 올릴 수 있습니다. 이때 `/data` 폴더를 영구 저장소에 연결하고, HTTPS면 `SECURE_COOKIE=1`을 설정하세요.
+
+## 휴대폰에서 앱처럼 쓰기
+- 아이폰(사파리): 공유 버튼 → **홈 화면에 추가**
+- 안드로이드(크롬): ⋮ 메뉴 → **홈 화면에 추가**
 
 ## 운영 안내 문구 예시 (가정통신문)
 > 학부모님들의 자유로운 소통을 위해 익명 소통방을 열었습니다.
