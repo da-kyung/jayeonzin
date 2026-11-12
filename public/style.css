@@ -200,3 +200,24 @@ textarea.input { resize: vertical; }
 .promo-admin .actions { margin-top: 0; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .btn.danger { color: var(--red); }
+
+/* 학교 홈페이지 소식 */
+.section-title { font-size: 14px; font-weight: 800; color: var(--muted); padding: 14px 16px 6px; }
+.news-box { background: #fff; padding-bottom: 6px; margin-bottom: 8px; }
+.news-box .chips { padding-top: 0; }
+.news-list { list-style: none; margin: 0; padding: 0; }
+.news-item { display: flex; align-items: center; border-top: 1px solid #f0f2f0; }
+.news-link { flex: 1; min-width: 0; padding: 10px 6px 10px 16px; }
+.news-top { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.tag.news-src { background: #f1f2f6; color: #3d4560; }
+.tag.new { background: var(--brand); color: #fff; padding: 1px 5px; }
+.news-date { color: var(--muted); margin-left: auto; }
+.news-title { font-size: 15px; font-weight: 600; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.news-talk { flex: none; border: 0; background: var(--brand-l); width: 40px; height: 40px; border-radius: 12px; margin-right: 12px; font-size: 17px; cursor: pointer; }
+.news-banner em { font-style: normal; font-size: 12px; font-weight: 700; color: var(--brand); }
+.news-src-rows { display: grid; gap: 12px; margin: 10px 0; }
+.news-src-row { display: grid; gap: 6px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; }
+.news-src-row .inline .input { flex: 1; }
+.ok-text { color: #2e7d4f; }
+.auto-link { color: #2563a8; text-decoration: underline; word-break: break-all; }
+.msg.me .auto-link { color: #fff; }

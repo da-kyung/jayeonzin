@@ -82,6 +82,20 @@ function dayLabel(ts) {
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 ${'일월화수목금토'[d.getDay()]}요일`;
 }
 
+// 글 속 http(s) 주소를 눌러 열 수 있는 링크로 (텍스트로만 삽입하므로 안전)
+function linkify(text) {
+  const out = [];
+  let last = 0;
+  for (const m of String(text).matchAll(/https?:\/\/[^\s<>"']+/g)) {
+    out.push(text.slice(last, m.index));
+    const url = m[0].replace(/[).,]+$/, '');
+    out.push(h('a', { href: url, target: '_blank', rel: 'noopener noreferrer nofollow', class: 'auto-link', onclick: (e) => e.stopPropagation() }, url));
+    last = m.index + url.length;
+  }
+  out.push(text.slice(last));
+  return out;
+}
+
 function avatar(content, cls = '') {
   return h('div', { class: 'avatar ' + cls }, content);
 }
@@ -176,11 +190,14 @@ async function viewList(mode = 'home') {
         h('button', { class: state.sort === k ? 'on' : '', onclick: () => { state.sort = k; viewList(mode); } }, v))));
   }
   if (mode === 'mine') parts.push(h('p', { class: 'hint' }, '내가 쓴 글과 댓글 단 대화방이에요. 이 기기에서만 보여요.'));
+  if (mode === 'notice') parts.push(schoolNewsSection());
 
   const pinnedBox = h('div', {});
   const list = h('ul', { class: 'room-list' }, h('li', { class: 'empty' }, '불러오는 중…'));
   const more = h('div', { class: 'center' });
-  render(...parts, pinnedBox, list, more);
+  const newsBanner = h('div', {});
+  render(...parts, newsBanner, pinnedBox, mode === 'notice' && h('div', { class: 'section-title' }, '📢 소통방 공지'), list, more);
+  if (mode === 'home' && !state.q) recentNewsBanner(newsBanner);
 
   let page = 1;
   const load = async () => {
@@ -210,6 +227,91 @@ async function viewList(mode = 'home') {
     } catch (e) { handleError(e); }
   };
   load();
+}
+
+// ---------- 학교 홈페이지 소식 (공지사항 · 가정통신문) ----------
+const isNew = (it) => it.date && Date.now() - new Date(it.date + 'T00:00:00+09:00').getTime() < 3 * 86400_000;
+const shortDate = (d) => (d ? d.slice(2).replace(/-/g, '.') : '');
+
+function newsItem(it) {
+  return h('li', { class: 'news-item' },
+    h('a', { class: 'news-link', href: it.url, target: '_blank', rel: 'noopener noreferrer' },
+      h('div', { class: 'news-top' },
+        h('span', { class: 'tag news-src' }, it.source),
+        isNew(it) && h('span', { class: 'tag new' }, 'N'),
+        h('span', { class: 'news-date' }, shortDate(it.date))),
+      h('div', { class: 'news-title' }, it.title)),
+    h('button', { class: 'news-talk', title: '이 소식으로 이야기 나누기', onclick: () => {
+      state.prefill = { category: 'question', title: (it.title.includes(it.source) ? it.title : `[${it.source}] ${it.title}`).slice(0, 100), body: `학교 홈페이지 원문: ${it.url}\n\n` };
+      location.hash = '#/write';
+    } }, '💬'));
+}
+
+function schoolNewsSection() {
+  const box = h('section', { class: 'news-box' }, h('div', { class: 'section-title' }, '🏫 학교 홈페이지 소식'), h('p', { class: 'hint' }, '불러오는 중…'));
+  let source = '';
+  const load = async () => {
+    let d;
+    try { d = await api('GET', '/api/news?limit=15' + (source ? '&source=' + encodeURIComponent(source) : '')); } catch (e) { handleError(e); return; }
+    if (!d.sources.length) { box.replaceChildren(); return; }
+    box.replaceChildren(
+      h('div', { class: 'section-title' }, '🏫 학교 홈페이지 소식'),
+      d.sources.length > 1 && h('div', { class: 'chips' }, [['', '전체'], ...d.sources.map((x) => [x, x])].map(([k, v]) =>
+        h('button', { class: 'chip' + (source === k ? ' active' : ''), onclick: () => { source = k; load(); } }, v))),
+      d.items.length ? h('ul', { class: 'news-list' }, d.items.map(newsItem)) : h('p', { class: 'hint' }, '아직 가져온 소식이 없어요.'),
+      h('p', { class: 'hint' }, '제목을 누르면 학교 홈페이지 원문이 열려요. 💬를 누르면 학부모끼리 이야기를 나눌 수 있어요.'),
+    );
+  };
+  load();
+  return box;
+}
+
+async function recentNewsBanner(box) {
+  try {
+    const d = await api('GET', '/api/news?limit=5');
+    const fresh = d.items.filter(isNew);
+    if (!fresh.length) return;
+    box.replaceChildren(h('a', { class: 'pin-banner news-banner', href: '#/notice' },
+      h('b', {}, '📄'), h('span', {}, `[${fresh[0].source}] ${fresh[0].title}`), fresh.length > 1 && h('em', {}, `+${fresh.length - 1}`), h('i', {}, '›')));
+  } catch { /* 무시 */ }
+}
+
+async function newsAdminPanel() {
+  const panel = h('section', { class: 'panel' });
+  const load = async () => {
+    let d;
+    try { d = await api('GET', '/api/admin/news'); } catch (e) { handleError(e); return; }
+    const rows = h('div', { class: 'news-src-rows' });
+    const addRow = (src = { name: '', url: '' }) => {
+      const st = d.status[src.name];
+      rows.append(h('div', { class: 'news-src-row' },
+        h('div', { class: 'inline' },
+          h('input', { class: 'input name', placeholder: '이름 (예: 가정통신문)', value: src.name, maxlength: 20 }),
+          h('button', { type: 'button', class: 'btn small', onclick: (e) => e.target.closest('.news-src-row').remove() }, '삭제')),
+        h('input', { class: 'input url', type: 'url', placeholder: 'https://www.dtg.hs.kr/sys/bbs/board.php?bo_table=...', value: src.url }),
+        st && h('div', { class: 'small ' + (st.ok ? 'ok-text' : 'warn-text') },
+          st.ok ? `✓ 연결됨 · ${new Date(st.at).toLocaleString('ko-KR')} · 글 ${st.count}개 (${st.via === 'rss' ? 'RSS' : '목록'})` : `✕ 실패 · ${new Date(st.at).toLocaleString('ko-KR')} · ${st.error}`)));
+    };
+    (d.sources.length ? d.sources : [{ name: '공지사항', url: '' }, { name: '가정통신문', url: '' }]).forEach(addRow);
+    const collect = () => [...rows.querySelectorAll('.news-src-row')].map((r) => ({ name: r.querySelector('.name').value, url: r.querySelector('.url').value }));
+    panel.replaceChildren(
+      h('h3', {}, '🔗 학교 홈페이지 연동'),
+      h('p', { class: 'muted small' }, '학교 홈페이지에서 공지사항·가정통신문 게시판을 열고, 주소창의 주소를 그대로 붙여넣으세요. 30분마다 제목과 링크만 가져옵니다.'),
+      rows,
+      h('div', { class: 'actions' },
+        h('button', { class: 'btn small', onclick: () => addRow() }, '+ 게시판 추가'),
+        h('button', { class: 'btn small primary', onclick: async () => {
+          try {
+            await api('POST', '/api/admin/news/sources', { sources: collect() });
+            toast('저장했습니다. 가져오는 중…');
+            await api('POST', '/api/admin/news/refresh');
+            load();
+          } catch (e) { toast(e.message); }
+        } }, '저장 후 가져오기')),
+    );
+  };
+  load();
+  return panel;
 }
 
 // ---------- 공익 정보 · 제휴 ----------
@@ -405,7 +507,7 @@ async function viewPost(id) {
               h('span', { class: `tag cat-${post.category}` }, post.categoryName),
               post.hidden && h('span', { class: 'tag warn' }, '숨김')),
             h('div', { class: 'post-title' }, post.title),
-            h('div', { class: 'text' }, post.body),
+            h('div', { class: 'text' }, linkify(post.body)),
             h('div', { class: 'post-foot' }, likeBtn, post.reports > 0 && h('span', { class: 'warn-text small' }, `신고 ${post.reports}`))),
           h('span', { class: 'msg-time' }, clock(post.createdAt))),
       ),
@@ -425,7 +527,7 @@ async function viewPost(id) {
         h('div', { class: 'msg-col' },
           showHead && !c.mine && h('div', { class: 'msg-name' }, c.isAdmin ? '✔ 운영자' : c.label),
           h('div', { class: 'msg-row' },
-            h('div', { class: 'bubble' + (c.hidden ? ' is-hidden' : ''), onclick: () => commentMenu(c, id) }, h('div', { class: 'text' }, c.body)),
+            h('div', { class: 'bubble' + (c.hidden ? ' is-hidden' : ''), onclick: () => commentMenu(c, id) }, h('div', { class: 'text' }, linkify(c.body))),
             h('span', { class: 'msg-time' }, c.reports > 0 ? h('span', { class: 'warn-text' }, `신고${c.reports} `) : '', clock(c.createdAt))),
         ),
       ));
@@ -500,13 +602,16 @@ function viewWrite() {
   setNav('write');
   topbar({ title: '새 이야기 시작하기' });
   const cats = Object.entries(state.me.categories).filter(([k]) => k !== 'notice' || state.me.admin);
-  let category = state.category && state.category !== 'notice' ? state.category : 'free';
+  const pre = state.prefill || {};
+  state.prefill = null;
+  let category = pre.category || (state.category && state.category !== 'notice' ? state.category : 'free');
   const chips = h('div', { class: 'chips wrap' });
   const drawChips = () => chips.replaceChildren(...cats.map(([k, v]) =>
     h('button', { type: 'button', class: 'chip' + (category === k ? ' active' : ''), onclick: () => { category = k; drawChips(); } }, v)));
   drawChips();
-  const title = h('input', { class: 'input', maxlength: 100, placeholder: '제목 (예: 방과후 신청 언제까지인가요?)' });
+  const title = h('input', { class: 'input', maxlength: 100, placeholder: '제목 (예: 방과후 신청 언제까지인가요?)', value: pre.title || '' });
   const body = h('textarea', { class: 'input', rows: 8, maxlength: 5000, placeholder: '내용을 입력하세요.\n\n아이 이름·반·연락처 등 개인을 특정할 수 있는 정보는 적지 않는 것을 권장해요.' });
+  body.value = pre.body || '';
   const asAdminChk = state.me.admin && h('input', { type: 'checkbox', checked: true });
   const submit = async (e) => {
     e.preventDefault();
@@ -586,6 +691,7 @@ async function viewMore() {
         h('div', { class: 'text' }, c.body),
         c.reasons.length > 0 && h('div', { class: 'reasons' }, '사유: ' + c.reasons.join(' / ')),
         h('button', { class: 'btn small', onclick: () => adminCall(`/api/admin/comments/${c.id}/${c.hidden ? 'unhide' : 'hide'}`, viewMore) }, c.hidden ? '숨김 해제' : '숨기기'))) : h('p', { class: 'muted small' }, '없음')),
+    await newsAdminPanel(),
     await promoAdminPanel(),
     ...sections,
   );

@@ -117,3 +117,56 @@ test('공익 정보·제휴: 운영자만 등록, 공익 우선 노출, 끄기',
   assert.equal((await u('GET', '/api/promos/slot')).data.promo, null);
   assert.equal((await u('GET', '/api/me')).data.promoEnabled, false);
 });
+
+test('학교 홈페이지 연동: 목록 HTML · RSS에서 제목/날짜/링크 가져오기', async () => {
+  const http = require('node:http');
+  const listHtml = `<html><head><meta charset="utf-8"></head><body><table>
+    <tr class="bo_notice"><td class="td_subject"><a href="/sys/bbs/board.php?bo_table=notice&amp;wr_id=120&amp;page=1">공지 2025학년도 겨울방학 방과후학교 안내</a></td><td class="td_datetime">2025-11-10</td></tr>
+    <tr><td><a href="./board.php?bo_table=notice&wr_id=118">  2학년 선택과목 설명회 개최 안내 <span>새글</span></a> <a href="./board.php?bo_table=notice&wr_id=118#c_5">[3]</a></td><td>25-11-07</td></tr>
+    <tr><td><a href="./board.php?bo_table=other&wr_id=999">다른 게시판 글</a></td><td>25-11-01</td></tr>
+    <tr><td><a href="./board.php?bo_table=notice&page=2">2</a></td></tr>
+  </table></body></html>`;
+  const rss = `<?xml version="1.0" encoding="utf-8"?><rss><channel>
+    <item><title><![CDATA[가정통신문 제2025-88호 수학여행 동의서]]></title><link>https://school.example/sys/bbs/board.php?bo_table=letters&amp;wr_id=88</link><pubDate>Wed, 12 Nov 2025 01:00:00 +0000</pubDate></item>
+    <item><title>가정통신문 제2025-87호 급식 안내</title><link>https://school.example/sys/bbs/board.php?bo_table=letters&amp;wr_id=87</link><pubDate>Mon, 03 Nov 2025 01:00:00 +0000</pubDate></item>
+  </channel></rss>`;
+  const mock = http.createServer((req, res) => {
+    const u = new URL(req.url, 'http://x');
+    if (u.pathname === '/sys/bbs/board.php' && u.searchParams.get('bo_table') === 'notice') { res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return res.end(listHtml); }
+    if (u.pathname === '/sys/bbs/rss.php' && u.searchParams.get('bo_table') === 'letters') { res.writeHead(200, { 'Content-Type': 'application/xml' }); return res.end(rss); }
+    res.writeHead(404); res.end('not found');
+  });
+  await new Promise((r) => mock.listen(0, r));
+  const m = `http://localhost:${mock.address().port}`;
+  try {
+    const u = client(), adm = client();
+    await u('POST', '/api/enter', { code: '2468' });
+    await adm('POST', '/api/admin/login', { password: 'teacher!' });
+    assert.equal((await u('POST', '/api/admin/news/sources', { sources: [] })).status, 403);
+    assert.equal((await adm('POST', '/api/admin/news/sources', { sources: [{ name: '공지', url: 'ftp://x' }] })).status, 400);
+    await adm('POST', '/api/admin/news/sources', { sources: [
+      { name: '공지사항', url: `${m}/sys/bbs/board.php?bo_table=notice` },
+      { name: '가정통신문', url: `${m}/sys/bbs/board.php?bo_table=letters` },
+      { name: '고장난곳', url: 'http://localhost:1/board.php?bo_table=x' },
+    ] });
+    const st = (await adm('POST', '/api/admin/news/refresh')).data.status;
+    assert.equal(st['공지사항'].via, 'html');
+    assert.equal(st['가정통신문'].via, 'rss');
+    assert.equal(st['고장난곳'].ok, false);
+
+    const notice = (await u('GET', '/api/news?source=' + encodeURIComponent('공지사항'))).data.items;
+    assert.deepEqual(notice.map((x) => [x.title, x.date]), [
+      ['2025학년도 겨울방학 방과후학교 안내', '2025-11-10'],
+      ['2학년 선택과목 설명회 개최 안내', '2025-11-07'],
+    ]);
+    assert.equal(notice[0].url, `${m}/sys/bbs/board.php?bo_table=notice&wr_id=120`);
+    const all = (await u('GET', '/api/news')).data;
+    assert.deepEqual(all.sources, ['공지사항', '가정통신문', '고장난곳']);
+    assert.equal(all.items[0].title, '가정통신문 제2025-88호 수학여행 동의서');
+    assert.equal(all.items[0].date, '2025-11-12');
+
+    // 다시 가져와도 중복 없음
+    await adm('POST', '/api/admin/news/refresh');
+    assert.equal((await u('GET', '/api/news')).data.items.length, 4);
+  } finally { mock.close(); }
+});

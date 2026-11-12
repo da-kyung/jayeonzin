@@ -7,6 +7,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { DatabaseSync } = require('node:sqlite');
+const { createNews } = require('./news.js');
 
 // ---------------------------------------------------------------------------
 // 설정 (환경변수로 변경)
@@ -194,6 +195,17 @@ function parsePromo(body) {
   if (url && !/^https?:\/\/[^\s]+$/i.test(url)) return { error: '링크는 http:// 또는 https:// 로 시작해야 합니다.' };
   const date = (v, end) => (v ? new Date(v + (end ? 'T23:59:59' : 'T00:00:00') + '+09:00').getTime() || null : null);
   return { kind, title, body: text, sponsor, url: url.slice(0, 300), starts_at: date(body.startsAt), ends_at: date(body.endsAt, true), active: body.active === false ? 0 : 1 };
+}
+
+// ---------------------------------------------------------------------------
+// 학교 홈페이지 공지사항 · 가정통신문 연동
+// ---------------------------------------------------------------------------
+const news = createNews({ db, getSetting, setSetting });
+// 최초 설정: NEWS_SOURCES="공지사항|https://...,가정통신문|https://..."
+if (process.env.NEWS_SOURCES && getSetting('news_sources', '') === '') {
+  try {
+    news.setSources(process.env.NEWS_SOURCES.split(',').map((x) => { const [name, ...u] = x.split('|'); return { name, url: u.join('|') }; }));
+  } catch (e) { console.warn('NEWS_SOURCES 설정 오류:', e.message); }
 }
 
 // ---------------------------------------------------------------------------
@@ -586,6 +598,25 @@ route('POST', '/api/admin/settings', (req, res, s, body) => {
   send(res, 200, { ok: true, promoEnabled: promoEnabled() });
 }, { admin: true });
 
+// --- 학교 홈페이지 소식 ---
+route('GET', '/api/news', (req, res, s, body, ip, params, url) => {
+  const source = url.searchParams.get('source') || undefined;
+  const limit = Number(url.searchParams.get('limit')) || 30;
+  send(res, 200, { sources: news.getSources().map((x) => x.name), items: news.list({ source, limit }) });
+});
+
+route('GET', '/api/admin/news', (req, res) => {
+  send(res, 200, { sources: news.getSources(), status: news.getStatus() });
+}, { admin: true });
+
+route('POST', '/api/admin/news/sources', (req, res, s, body) => {
+  try { send(res, 200, { sources: news.setSources(body.sources) }); } catch (e) { fail(res, 400, e.message); }
+}, { admin: true });
+
+route('POST', '/api/admin/news/refresh', async (req, res) => {
+  send(res, 200, { status: await news.refresh() });
+}, { admin: true });
+
 // ---------------------------------------------------------------------------
 // 서버
 // ---------------------------------------------------------------------------
@@ -623,6 +654,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 if (require.main === module) {
+  news.start(Number(process.env.NEWS_INTERVAL_MIN || 30));
   server.listen(CONFIG.port, () => {
     console.log(`[${CONFIG.schoolName}] http://localhost:${CONFIG.port}`);
     if (!process.env.ACCESS_CODE || !process.env.ADMIN_PASSWORD) {
@@ -631,4 +663,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { server, db, sanitizeText };
+module.exports = { server, db, sanitizeText, news };
