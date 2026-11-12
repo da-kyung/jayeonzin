@@ -21,6 +21,8 @@ const CONFIG = {
   secureCookie: process.env.SECURE_COOKIE === '1',
   themeColor: /^#[0-9a-fA-F]{6}$/.test(process.env.THEME_COLOR || '') ? process.env.THEME_COLOR : '#d7263a', // 학교 상징색 (동탄국제고 교표 빨강 기반)
   logo: process.env.SCHOOL_LOGO || '', // public 폴더 안 로고 파일 경로 (예: /logo.png)
+  // 공익 우선 원칙: 목록 광고칸 노출 중 공익 정보가 차지하는 최소 비율 (0.5~1.0)
+  publicFirstRatio: Math.min(1, Math.max(0.5, Number(process.env.PUBLIC_FIRST_RATIO || 0.7))),
 };
 if (!CONFIG.logo) {
   for (const f of ['logo.png', 'logo.svg', 'logo.jpg', 'logo.webp']) {
@@ -101,6 +103,22 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_posts_cat ON posts(category, created_at);
   CREATE INDEX IF NOT EXISTS idx_comments_post ON comments(post_id, created_at);
+  -- 공익 정보 · 제휴(학원/업체) 게시물. 운영자만 등록.
+  CREATE TABLE IF NOT EXISTS promos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    kind TEXT NOT NULL,            -- public(공익 정보) | sponsor(제휴·광고)
+    title TEXT NOT NULL,
+    body TEXT NOT NULL DEFAULT '',
+    sponsor TEXT NOT NULL DEFAULT '',  -- 광고주/기관명 (표시 의무)
+    url TEXT NOT NULL DEFAULT '',
+    starts_at INTEGER,
+    ends_at INTEGER,
+    active INTEGER NOT NULL DEFAULT 1,
+    impressions INTEGER NOT NULL DEFAULT 0,  -- 합계만 집계 (개인 추적 없음)
+    clicks INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 `);
 
 // ---------------------------------------------------------------------------
@@ -123,6 +141,60 @@ const NOUN = ['해바라기', '민들레', '다람쥐', '고래', '참새', '코
 const EMOJI = { 해바라기: '🌻', 민들레: '🌼', 다람쥐: '🐿️', 고래: '🐋', 참새: '🐦', 코스모스: '🌸', 토끼: '🐰', 펭귄: '🐧', 소나무: '🌲', 은행나무: '🌳', 수달: '🦦', 부엉이: '🦉' };
 const avatarOf = (nickname) => EMOJI[String(nickname).split(' ').pop()] || '🙂';
 const randomNickname = () => `${ADJ[crypto.randomInt(ADJ.length)]} ${NOUN[crypto.randomInt(NOUN.length)]}`;
+
+// ---------------------------------------------------------------------------
+// 공익 정보 · 제휴 (공익 우선)
+// ---------------------------------------------------------------------------
+const PROMO_KINDS = { public: '공익', sponsor: '제휴' };
+const getSetting = (k, d) => db.prepare('SELECT value FROM settings WHERE key = ?').get(k)?.value ?? d;
+const setSetting = (k, v) => db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run(k, String(v));
+const promoEnabled = () => getSetting('promo_enabled', '1') === '1';
+
+function livePromos(kind) {
+  const now = Date.now();
+  return db.prepare(`SELECT * FROM promos WHERE active = 1 AND (starts_at IS NULL OR starts_at <= ?) AND (ends_at IS NULL OR ends_at >= ?)
+    ${kind ? 'AND kind = ?' : ''} ORDER BY CASE kind WHEN 'public' THEN 0 ELSE 1 END, id DESC`).all(now, now, ...(kind ? [kind] : []));
+}
+
+// 목록 광고칸 1개를 고른다. 공익 정보가 최소 publicFirstRatio 비율로 노출되도록 보장.
+function pickPromo() {
+  const pub = livePromos('public');
+  const spon = livePromos('sponsor');
+  let pool = pub;
+  if (!pub.length) pool = spon;
+  else if (spon.length) {
+    const { p = 0, s = 0 } = db.prepare("SELECT SUM(CASE kind WHEN 'public' THEN impressions END) AS p, SUM(CASE kind WHEN 'sponsor' THEN impressions END) AS s FROM promos").get() || {};
+    const total = (p || 0) + (s || 0);
+    // 누적 노출에서 공익 비율이 목표 미만이면 공익, 아니면 확률로 선택
+    const publicShare = total ? (p || 0) / total : 1;
+    pool = publicShare < CONFIG.publicFirstRatio || Math.random() < CONFIG.publicFirstRatio ? pub : spon;
+  }
+  if (!pool.length) return null;
+  // 같은 종류 안에서는 노출이 적은 것 우선 (공정한 순환)
+  pool.sort((a, b) => a.impressions - b.impressions);
+  return pool[0];
+}
+
+function promoView(p, admin) {
+  return {
+    id: p.id, kind: p.kind, kindName: PROMO_KINDS[p.kind], title: p.title, body: p.body, sponsor: p.sponsor, url: p.url,
+    ...(admin ? { active: !!p.active, startsAt: p.starts_at, endsAt: p.ends_at, impressions: p.impressions, clicks: p.clicks } : {}),
+  };
+}
+
+function parsePromo(body) {
+  const kind = PROMO_KINDS[body.kind] ? body.kind : null;
+  if (!kind) return { error: '종류(공익/제휴)를 선택해주세요.' };
+  const title = String(body.title || '').trim().slice(0, 40);
+  if (title.length < 2) return { error: '제목을 2자 이상 입력해주세요.' };
+  const text = String(body.body || '').trim().slice(0, 120);
+  const sponsor = String(body.sponsor || '').trim().slice(0, 30);
+  if (kind === 'sponsor' && !sponsor) return { error: '제휴는 광고주(업체명) 표시가 필수입니다.' };
+  const url = String(body.url || '').trim();
+  if (url && !/^https?:\/\/[^\s]+$/i.test(url)) return { error: '링크는 http:// 또는 https:// 로 시작해야 합니다.' };
+  const date = (v, end) => (v ? new Date(v + (end ? 'T23:59:59' : 'T00:00:00') + '+09:00').getTime() || null : null);
+  return { kind, title, body: text, sponsor, url: url.slice(0, 300), starts_at: date(body.startsAt), ends_at: date(body.endsAt, true), active: body.active === false ? 0 : 1 };
+}
 
 // ---------------------------------------------------------------------------
 // 쿠키/세션 (가입 없음, 브라우저별 무작위 익명 ID)
@@ -277,7 +349,7 @@ const routes = [];
 const route = (method, pattern, handler, opts = {}) => routes.push({ method, re: new RegExp('^' + pattern.replace(/:(\w+)/g, '(?<$1>\\d+)') + '$'), handler, opts });
 
 route('GET', '/api/me', (req, res, s) => {
-  send(res, 200, { entered: !!s.clientId, admin: s.admin, schoolName: CONFIG.schoolName, categories: CATEGORIES, themeColor: CONFIG.themeColor, logo: CONFIG.logo, logoFull: CONFIG.logoFull });
+  send(res, 200, { entered: !!s.clientId, admin: s.admin, schoolName: CONFIG.schoolName, categories: CATEGORIES, themeColor: CONFIG.themeColor, logo: CONFIG.logo, logoFull: CONFIG.logoFull, promoEnabled: promoEnabled(), publicFirstRatio: CONFIG.publicFirstRatio });
 }, { public: true });
 
 route('POST', '/api/enter', async (req, res, s, body, ip) => {
@@ -457,6 +529,61 @@ route('GET', '/api/admin/stats', (req, res) => {
     byCategory: byCategory.map((r) => ({ name: CATEGORIES[r.category], n: r.n })),
     top: top.map((p) => ({ id: p.id, title: p.title, likes: p.likes, comments: p.comment_count, category: CATEGORIES[p.category] })),
   });
+}, { admin: true });
+
+// --- 공익 정보 · 제휴 ---
+route('GET', '/api/promos/slot', (req, res) => {
+  if (!promoEnabled()) return send(res, 200, { promo: null });
+  const p = pickPromo();
+  if (p) db.prepare('UPDATE promos SET impressions = impressions + 1 WHERE id = ?').run(p.id);
+  send(res, 200, { promo: p ? promoView(p) : null });
+});
+
+route('GET', '/api/promos', (req, res) => {
+  if (!promoEnabled()) return send(res, 200, { promos: [] });
+  send(res, 200, { promos: livePromos().map((p) => promoView(p)) });
+});
+
+route('POST', '/api/promos/:id/click', (req, res, s, body, ip, { id }) => {
+  if (rateLimit(`click:${s.authorHash}:${id}`, 1, 3600_000)) db.prepare('UPDATE promos SET clicks = clicks + 1 WHERE id = ?').run(id);
+  send(res, 200, { ok: true });
+});
+
+route('GET', '/api/admin/promos', (req, res, s) => {
+  const rows = db.prepare("SELECT * FROM promos ORDER BY CASE kind WHEN 'public' THEN 0 ELSE 1 END, id DESC").all();
+  const sum = (k) => rows.filter((r) => r.kind === k).reduce((a, r) => a + r.impressions, 0);
+  send(res, 200, { enabled: promoEnabled(), publicFirstRatio: CONFIG.publicFirstRatio, impressions: { public: sum('public'), sponsor: sum('sponsor') }, promos: rows.map((p) => promoView(p, true)) });
+}, { admin: true });
+
+route('POST', '/api/admin/promos', (req, res, s, body) => {
+  const v = parsePromo(body);
+  if (v.error) return fail(res, 400, v.error);
+  const r = db.prepare('INSERT INTO promos (kind, title, body, sponsor, url, starts_at, ends_at, active, created_at) VALUES (?,?,?,?,?,?,?,?,?)')
+    .run(v.kind, v.title, v.body, v.sponsor, v.url, v.starts_at, v.ends_at, v.active, Date.now());
+  send(res, 201, { id: Number(r.lastInsertRowid) });
+}, { admin: true });
+
+route('PUT', '/api/admin/promos/:id', (req, res, s, body, ip, { id }) => {
+  const v = parsePromo(body);
+  if (v.error) return fail(res, 400, v.error);
+  db.prepare('UPDATE promos SET kind=?, title=?, body=?, sponsor=?, url=?, starts_at=?, ends_at=?, active=? WHERE id=?')
+    .run(v.kind, v.title, v.body, v.sponsor, v.url, v.starts_at, v.ends_at, v.active, id);
+  send(res, 200, { ok: true });
+}, { admin: true });
+
+route('POST', '/api/admin/promos/:id/(?<action>on|off)', (req, res, s, body, ip, { id, action }) => {
+  db.prepare('UPDATE promos SET active = ? WHERE id = ?').run(action === 'on' ? 1 : 0, id);
+  send(res, 200, { ok: true });
+}, { admin: true });
+
+route('DELETE', '/api/admin/promos/:id', (req, res, s, body, ip, { id }) => {
+  db.prepare('DELETE FROM promos WHERE id = ?').run(id);
+  send(res, 200, { ok: true });
+}, { admin: true });
+
+route('POST', '/api/admin/settings', (req, res, s, body) => {
+  if (typeof body.promoEnabled === 'boolean') setSetting('promo_enabled', body.promoEnabled ? '1' : '0');
+  send(res, 200, { ok: true, promoEnabled: promoEnabled() });
 }, { admin: true });
 
 // ---------------------------------------------------------------------------

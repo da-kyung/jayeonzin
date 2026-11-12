@@ -173,3 +173,30 @@ textarea.input { resize: vertical; }
 @media (min-width: 700px) {
   .bottom-nav { max-width: 680px; margin: 0 auto; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
 }
+
+/* 공익 정보 · 제휴 */
+.promo-slot { list-style: none; padding: 8px 12px; background: #fafbfa; border-top: 1px solid #f0f2f0; }
+.promo { display: block; position: relative; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: #fff; }
+.promo-public-card { border-color: #cfe6d8; background: #f5fbf7; }
+.promo-head { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.promo-sponsor { font-weight: 600; }
+.promo-why { margin-left: auto; font-size: 11px; color: var(--muted); }
+.tag.promo-public { background: #2e7d4f; color: #fff; }
+.tag.promo-sponsor { background: #e9ebea; color: #555; }
+.promo-title { font-weight: 700; font-size: 15px; margin-top: 4px; }
+.promo-body { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.promo-go { display: inline-block; margin-top: 6px; font-size: 12px; font-weight: 700; color: var(--brand); }
+.promo-list { display: grid; gap: 10px; }
+.principles { padding-left: 20px; margin: 0; font-size: 14px; }
+.principles li { margin: 8px 0; } .principles b { display: block; } .principles span { color: var(--muted); font-size: 13px; }
+.link-panel { display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
+.switch { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.switch input { width: 18px; height: 18px; accent-color: var(--brand); }
+.promo-new { margin: 12px 0; } .promo-new summary { cursor: pointer; font-weight: 700; color: var(--brand); padding: 6px 0; }
+.promo-form { display: grid; gap: 8px; margin-top: 6px; }
+.promo-form .inline .mini { flex: 1; font-size: 12px; color: var(--muted); }
+.promo-admin-list { display: grid; gap: 14px; margin-top: 12px; }
+.promo-admin .meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--muted); margin: 6px 2px; }
+.promo-admin .actions { margin-top: 0; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn.danger { color: var(--red); }

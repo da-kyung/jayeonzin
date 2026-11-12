@@ -87,3 +87,33 @@ test('익명 글/댓글 흐름, 라벨, 공감, 신고 자동숨김, 운영자',
 
   assert.equal((await a('DELETE', `/api/posts/${id}`)).status, 200);
 });
+
+test('공익 정보·제휴: 운영자만 등록, 공익 우선 노출, 끄기', async () => {
+  const u = client(), adm = client();
+  await u('POST', '/api/enter', { code: '2468' });
+  await adm('POST', '/api/admin/login', { password: 'teacher!' });
+
+  assert.equal((await u('POST', '/api/admin/promos', { kind: 'public', title: '도서관 행사' })).status, 403);
+  assert.equal((await adm('POST', '/api/admin/promos', { kind: 'sponsor', title: '수학학원' })).status, 400, '광고주 필수');
+  assert.equal((await adm('POST', '/api/admin/promos', { kind: 'public', title: '링크', url: 'javascript:alert(1)' })).status, 400);
+  await adm('POST', '/api/admin/promos', { kind: 'public', title: '시립도서관 진로 특강', sponsor: '화성시립도서관', url: 'https://example.org' });
+  await adm('POST', '/api/admin/promos', { kind: 'sponsor', title: '여름 특강 안내', sponsor: 'OO학원' });
+
+  const kinds = { public: 0, sponsor: 0 };
+  for (let i = 0; i < 60; i++) kinds[(await u('GET', '/api/promos/slot')).data.promo.kind]++;
+  assert.ok(kinds.public / 60 >= 0.6, `공익 비중 ${kinds.public}/60`);
+  assert.ok(kinds.sponsor > 0);
+
+  const list = (await u('GET', '/api/promos')).data.promos;
+  assert.equal(list[0].kind, 'public');
+  assert.equal(list[0].impressions, undefined, '일반 사용자에겐 통계 비공개');
+
+  await u('POST', `/api/promos/${list[0].id}/click`);
+  await u('POST', `/api/promos/${list[0].id}/click`);
+  const ad = (await adm('GET', '/api/admin/promos')).data;
+  assert.equal(ad.promos.find((p) => p.id === list[0].id).clicks, 1, '같은 사람 중복 클릭은 1회');
+
+  await adm('POST', '/api/admin/settings', { promoEnabled: false });
+  assert.equal((await u('GET', '/api/promos/slot')).data.promo, null);
+  assert.equal((await u('GET', '/api/me')).data.promoEnabled, false);
+});

@@ -87,7 +87,7 @@ function avatar(content, cls = '') {
 }
 
 function render(...nodes) {
-  $app.replaceChildren(...nodes);
+  $app.replaceChildren(...nodes.flat().filter(Boolean));
   window.scrollTo(0, 0);
 }
 
@@ -205,10 +205,142 @@ async function viewList(mode = 'home') {
           { home: state.q ? '검색 결과가 없어요.' : '아직 대화가 없어요.\n첫 이야기를 시작해보세요!', notice: '등록된 공지가 없어요.', mine: '아직 참여한 대화가 없어요.' }[mode]));
       }
       for (const p of data.posts) list.append(roomItem(p));
+      if (mode === 'home' && page === 1 && !state.q && data.posts.length && state.me.promoEnabled) insertPromo(list);
       more.replaceChildren(data.hasMore ? h('button', { class: 'btn', onclick: () => { page++; load(); } }, '더 보기') : '');
     } catch (e) { handleError(e); }
   };
   load();
+}
+
+// ---------- 공익 정보 · 제휴 ----------
+const PROMO_PRINCIPLES = [
+  ['공익 정보가 먼저', () => `목록 정보칸 노출의 ${Math.round(state.me.publicFirstRatio * 100)}% 이상은 학교·교육청·도서관·청소년 상담·지역 행사 같은 공익 정보로 채웁니다.`],
+  ['제휴는 표시하고 심사', () => '학원·업체 제휴는 운영자 심사 후에만 실리며, 항상 「제휴」 표시와 광고주 이름을 밝힙니다.'],
+  ['대화는 광고 없이', () => '글과 댓글(대화방) 안에는 광고를 넣지 않습니다. 목록 중간 한 칸이 전부입니다.'],
+  ['싣지 않는 광고', () => '선행학습·불안 조장, 합격 보장 등 과장, 개인정보 수집, 특정 교사·학교 비방, 고액 컨설팅 유도 광고는 받지 않습니다.'],
+  ['개인 추적 없음', () => '노출·클릭은 합계로만 집계하며 누가 보았는지는 기록하지 않습니다.'],
+  ['수익은 공익에', () => '제휴 수익은 학부모회 공익 활동(장학·행사 등)에 쓰고 사용 내역을 공지합니다.'],
+];
+
+function promoCard(p, { compact = false } = {}) {
+  const inner = [
+    h('div', { class: 'promo-head' },
+      h('span', { class: `tag promo-${p.kind}` }, p.kindName),
+      p.sponsor && h('span', { class: 'promo-sponsor' }, p.sponsor),
+      compact && h('a', { href: '#/local', class: 'promo-why', onclick: (e) => e.stopPropagation() }, '운영 원칙 ⓘ')),
+    h('div', { class: 'promo-title' }, p.title),
+    p.body && h('div', { class: 'promo-body' }, p.body),
+  ];
+  const onclick = () => fetch(`/api/promos/${p.id}/click`, { method: 'POST', keepalive: true }).catch(() => {});
+  return p.url
+    ? h('a', { class: `promo promo-${p.kind}-card`, href: p.url, target: '_blank', rel: 'noopener noreferrer sponsored', onclick }, ...inner, h('span', { class: 'promo-go' }, '자세히 ›'))
+    : h('div', { class: `promo promo-${p.kind}-card` }, ...inner);
+}
+
+async function insertPromo(list) {
+  try {
+    const { promo } = await api('GET', '/api/promos/slot');
+    if (!promo) return;
+    const li = h('li', { class: 'promo-slot' }, promoCard(promo, { compact: true }));
+    const items = list.querySelectorAll('li.room');
+    const after = items[Math.min(2, items.length - 1)];
+    after.after(li);
+  } catch { /* 정보칸 실패는 무시 */ }
+}
+
+async function viewLocal() {
+  setNav('more');
+  topbar({ title: '지역·교육 정보', back: true });
+  let promos = [];
+  try { ({ promos } = await api('GET', '/api/promos')); } catch (e) { handleError(e); return; }
+  const pub = promos.filter((p) => p.kind === 'public');
+  const spon = promos.filter((p) => p.kind === 'sponsor');
+  render(
+    h('section', { class: 'panel' },
+      h('h3', {}, '🏫 공익 정보'),
+      pub.length ? h('div', { class: 'promo-list' }, pub.map((p) => promoCard(p))) : h('p', { class: 'muted small' }, '등록된 공익 정보가 없어요.')),
+    spon.length > 0 && h('section', { class: 'panel' },
+      h('h3', {}, '🤝 제휴 소식'),
+      h('p', { class: 'muted small' }, '운영자 심사를 거친 제휴 정보입니다. 이용 여부는 각 가정에서 판단해주세요.'),
+      h('div', { class: 'promo-list' }, spon.map((p) => promoCard(p)))),
+    principlesPanel(),
+  );
+}
+
+function principlesPanel() {
+  return h('section', { class: 'panel' },
+    h('h3', {}, '⚖️ 광고·제휴 운영 원칙'),
+    h('ol', { class: 'principles' }, PROMO_PRINCIPLES.map(([t, d]) => h('li', {}, h('b', {}, t), h('span', {}, d())))),
+    h('p', { class: 'muted small' }, '제휴 문의나 부적절한 광고 제보는 운영진에게 알려주세요.'));
+}
+
+async function promoAdminPanel() {
+  const panel = h('section', { class: 'panel' }, h('h3', {}, '🤝 공익 정보 · 제휴 관리'), h('p', { class: 'muted small' }, '불러오는 중…'));
+  const load = async () => {
+    let d;
+    try { d = await api('GET', '/api/admin/promos'); } catch (e) { handleError(e); return; }
+    const totalImp = d.impressions.public + d.impressions.sponsor;
+    const share = totalImp ? Math.round((d.impressions.public / totalImp) * 100) : 100;
+    const form = promoForm(null, load);
+    panel.replaceChildren(...[
+      h('div', { class: 'row' }, h('h3', {}, '🤝 공익 정보 · 제휴 관리'),
+        h('label', { class: 'switch' }, h('input', { type: 'checkbox', checked: d.enabled, onchange: async (e) => {
+          try { await api('POST', '/api/admin/settings', { promoEnabled: e.target.checked }); await loadMe(); toast(e.target.checked ? '정보칸을 켰습니다.' : '정보칸을 껐습니다.'); load(); } catch (err) { handleError(err); }
+        } }), h('span', {}, d.enabled ? '노출 중' : '꺼짐'))),
+      h('div', { class: 'stats' },
+        stat('공익 노출 비중', share + '%'),
+        stat('최소 공익 비율', Math.round(d.publicFirstRatio * 100) + '%'),
+        stat('누적 노출', totalImp)),
+      share < d.publicFirstRatio * 100 && h('p', { class: 'warn-text small' }, '공익 정보 노출 비중이 기준보다 낮아요. 공익 정보를 더 등록해주세요.'),
+      h('details', { class: 'promo-new' }, h('summary', {}, '+ 새로 등록'), form),
+      d.promos.length ? h('div', { class: 'promo-admin-list' }, d.promos.map((p) => {
+        const ctr = p.impressions ? ((p.clicks / p.impressions) * 100).toFixed(1) : '0.0';
+        const period = [p.startsAt && new Date(p.startsAt).toLocaleDateString('ko-KR'), p.endsAt && new Date(p.endsAt).toLocaleDateString('ko-KR')].filter(Boolean).join(' ~ ');
+        const box = h('div', { class: 'promo-admin' + (p.active ? '' : ' is-hidden') },
+          promoCard(p),
+          h('div', { class: 'meta' },
+            h('span', {}, `노출 ${p.impressions}`), h('span', {}, `클릭 ${p.clicks}`), h('span', {}, `클릭률 ${ctr}%`),
+            period && h('span', {}, `기간 ${period}`), !p.active && h('span', { class: 'tag warn' }, '중지')),
+          h('div', { class: 'actions' },
+            h('button', { class: 'btn small', onclick: () => box.replaceChildren(promoForm(p, load)) }, '수정'),
+            h('button', { class: 'btn small', onclick: () => adminCall(`/api/admin/promos/${p.id}/${p.active ? 'off' : 'on'}`, load) }, p.active ? '중지' : '재개'),
+            h('button', { class: 'btn small danger', onclick: async () => {
+              if (!confirm('삭제할까요? 노출 통계도 함께 지워집니다.')) return;
+              try { await api('DELETE', `/api/admin/promos/${p.id}`); load(); } catch (e) { handleError(e); }
+            } }, '삭제')));
+        return box;
+      })) : h('p', { class: 'muted small' }, '아직 등록된 정보가 없어요. 공익 정보부터 등록해보세요.'),
+    ].filter(Boolean));
+  };
+  load();
+  return panel;
+}
+
+function promoForm(p, done) {
+  const toDate = (ts) => (ts ? new Date(ts + 9 * 3600_000).toISOString().slice(0, 10) : '');
+  const kind = h('select', { class: 'input' },
+    h('option', { value: 'public', selected: !p || p.kind === 'public' }, '공익 정보 (학교·교육청·도서관·지역 행사 등)'),
+    h('option', { value: 'sponsor', selected: p?.kind === 'sponsor' }, '제휴 (학원·업체, 광고주 표시 필수)'));
+  const title = h('input', { class: 'input', maxlength: 40, placeholder: '제목 (40자)', value: p?.title || '' });
+  const body = h('textarea', { class: 'input', rows: 2, maxlength: 120, placeholder: '한두 줄 설명 (120자)' });
+  body.value = p?.body || '';
+  const sponsor = h('input', { class: 'input', maxlength: 30, placeholder: '기관/광고주 이름', value: p?.sponsor || '' });
+  const url = h('input', { class: 'input', type: 'url', placeholder: 'https:// 링크 (선택)', value: p?.url || '' });
+  const startsAt = h('input', { class: 'input', type: 'date', value: toDate(p?.startsAt) });
+  const endsAt = h('input', { class: 'input', type: 'date', value: toDate(p?.endsAt) });
+  return h('form', { class: 'promo-form', onsubmit: async (e) => {
+    e.preventDefault();
+    const payload = { kind: kind.value, title: title.value, body: body.value, sponsor: sponsor.value, url: url.value, startsAt: startsAt.value, endsAt: endsAt.value, active: p ? p.active : true };
+    try {
+      await api(p ? 'PUT' : 'POST', p ? `/api/admin/promos/${p.id}` : '/api/admin/promos', payload);
+      toast(p ? '수정했습니다.' : '등록했습니다.');
+      done();
+    } catch (err) { toast(err.message); }
+  } },
+  kind, title, body, sponsor, url,
+  h('div', { class: 'inline' }, h('label', { class: 'mini' }, '시작', startsAt), h('label', { class: 'mini' }, '종료', endsAt)),
+  h('p', { class: 'muted small' }, '제휴는 「운영 원칙」에 어긋나는 내용(선행학습·불안 조장, 합격 보장 등)을 싣지 않습니다.'),
+  h('div', { class: 'actions' }, h('button', { class: 'btn primary' }, p ? '저장' : '등록'), p && h('button', { type: 'button', class: 'btn', onclick: done }, '취소')));
 }
 
 function roomItem(p) {
@@ -399,18 +531,20 @@ async function viewMore() {
   setNav('more');
   topbar({ title: '더보기' });
   const sections = [
+    state.me.promoEnabled && h('a', { class: 'panel link-panel', href: '#/local' }, h('span', {}, '🏘 지역·교육 정보'), h('span', { class: 'muted small' }, '공익 정보 · 제휴 소식 ›')),
     h('section', { class: 'panel' },
       h('h3', {}, '📋 이용 수칙'),
       h('ol', { class: 'rules' },
         h('li', {}, '서로 존중하는 말투를 사용해주세요.'),
         h('li', {}, '특정 학생·교사·학부모를 비방하거나 알아볼 수 있게 쓰지 말아주세요.'),
-        h('li', {}, '광고·홍보·정치·종교 글은 삭제될 수 있어요.'),
+        h('li', {}, '개인 광고·홍보·정치·종교 글은 삭제될 수 있어요. 제휴는 운영진 심사를 거쳐 「제휴」 표시로만 실립니다.'),
         h('li', {}, '신고가 3회 쌓이면 자동으로 숨겨지고 운영자가 검토해요.'),
       )),
     h('section', { class: 'panel' },
       h('h3', {}, '📱 앱처럼 쓰기'),
       h('p', {}, '아이폰: 사파리 하단 공유 버튼 → ', h('b', {}, '홈 화면에 추가')),
       h('p', {}, '안드로이드: 크롬 ⋮ 메뉴 → ', h('b', {}, '홈 화면에 추가'))),
+    principlesPanel(),
   ];
 
   if (!state.me.admin) {
@@ -452,6 +586,7 @@ async function viewMore() {
         h('div', { class: 'text' }, c.body),
         c.reasons.length > 0 && h('div', { class: 'reasons' }, '사유: ' + c.reasons.join(' / ')),
         h('button', { class: 'btn small', onclick: () => adminCall(`/api/admin/comments/${c.id}/${c.hidden ? 'unhide' : 'hide'}`, viewMore) }, c.hidden ? '숨김 해제' : '숨기기'))) : h('p', { class: 'muted small' }, '없음')),
+    await promoAdminPanel(),
     ...sections,
   );
 }
@@ -482,6 +617,7 @@ function route() {
   if (hash === '#/notice') return viewList('notice');
   if (hash === '#/mine') return viewList('mine');
   if (hash === '#/more' || hash === '#/admin') return viewMore();
+  if (hash === '#/local') return viewLocal();
   return viewList('home');
 }
 
