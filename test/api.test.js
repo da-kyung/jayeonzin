@@ -170,3 +170,52 @@ test('학교 홈페이지 연동: 목록 HTML · RSS에서 제목/날짜/링크 
     assert.equal((await u('GET', '/api/news')).data.items.length, 4);
   } finally { mock.close(); }
 });
+
+test('학사일정: 나이스 5건 제한 분할 조회 · 기간 묶기 · 직접 등록 · 캘린더 파일', async () => {
+  const http = require('node:http');
+  const rows = require('./neis-fixture.json'); // 동탄국제고 실제 나이스 학사일정(2026.10~2027.5)에서 추출
+  let calls = 0;
+  const mock = http.createServer((req, res) => {
+    calls++;
+    const u = new URL(req.url, 'http://x');
+    const from = u.searchParams.get('AA_FROM_YMD'), to = u.searchParams.get('AA_TO_YMD');
+    const all = rows.filter((r) => r.AA_YMD >= from && r.AA_YMD <= to).sort((a, b) => a.AA_YMD.localeCompare(b.AA_YMD));
+    const size = u.searchParams.get('KEY') ? 1000 : 5; // 키 없으면 실제 나이스처럼 5건만
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    if (!all.length) return res.end(JSON.stringify({ RESULT: { CODE: 'INFO-200', MESSAGE: '해당하는 데이터가 없습니다.' } }));
+    res.end(JSON.stringify({ SchoolSchedule: [{ head: [{ list_total_count: all.length }, { RESULT: { CODE: 'INFO-000', MESSAGE: '정상' } }] }, { row: all.slice(0, size) }] }));
+  });
+  await new Promise((r) => mock.listen(0, r));
+  process.env.NEIS_BASE = `http://localhost:${mock.address().port}`;
+  try {
+    const { fetchRows, groupRows, toIcs } = require('../calendar.js');
+    const got = await fetchRows({ office: 'J10', school: '7530976', key: '', from: '20261001', to: '20270531' });
+    assert.equal(got.length, rows.length, '키 없이도 전부 수집');
+    const keyed = (calls = 0, await fetchRows({ office: 'J10', school: '7530976', key: 'K', from: '20261001', to: '20270531' }));
+    assert.equal(keyed.length, rows.length);
+    assert.equal(calls, 1, '키가 있으면 1회 조회');
+
+    const ev = groupRows(rows);
+    const winter = ev.find((e) => e.title === '동계방학' && !e.grades);
+    assert.deepEqual([winter.start, winter.end, winter.holiday], ['2027-01-08', '2027-01-29', 1]);
+    assert.equal(ev.find((e) => e.title === '동계방학' && e.grades).grades, '3');
+    assert.ok(!ev.some((e) => e.title === '토요휴업일'));
+    const ics = toIcs({ id: 1, start: '2027-01-08', end: '2027-01-29', title: '동계방학', grades: '', detail: '' }, '동탄국제고');
+    assert.match(ics, /DTSTART;VALUE=DATE:20270108/);
+    assert.match(ics, /DTEND;VALUE=DATE:20270130/);
+
+    // API: 운영자 직접 등록 + 다가오는 일정 + ics 다운로드
+    const u = client(), adm = client();
+    await u('POST', '/api/enter', { code: '2468' });
+    await adm('POST', '/api/admin/login', { password: 'teacher!' });
+    assert.equal((await u('POST', '/api/admin/events', { start: '2099-01-01', title: 'x' })).status, 403);
+    assert.equal((await adm('POST', '/api/admin/events', { start: '2099-01-05', end: '2099-01-01', title: '잘못된 기간' })).status, 400);
+    const t = new Date(Date.now() + 9 * 3600_000 + 2 * 86400_000).toISOString().slice(0, 10);
+    const { data: { id } } = await adm('POST', '/api/admin/events', { start: t, title: '2학기 기말고사', grades: '1,2' });
+    const up = (await u('GET', '/api/events/upcoming')).data.events;
+    assert.ok(up.some((e) => e.id === id && e.grades === '1,2' && e.source === 'manual'));
+    const res = await fetch(`${base}/api/events/${id}/ics`, { headers: { Cookie: '' } });
+    assert.equal(res.status, 401, '입장 전에는 받을 수 없음');
+    assert.equal((await adm('DELETE', `/api/admin/events/${id}`)).status, 200);
+  } finally { mock.close(); delete process.env.NEIS_BASE; }
+});

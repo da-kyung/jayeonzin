@@ -141,6 +141,8 @@ PORT=$APP_PORT
 HOST=127.0.0.1
 SECURE_COOKIE=1
 SITE_DOMAIN=$DOMAIN
+# 나이스 학사일정 인증키 (선택: 없어도 동작, open.neis.go.kr 에서 무료 발급)
+NEIS_KEY=
 EOF
   umask 022
 else

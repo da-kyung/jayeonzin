@@ -1,0 +1,506 @@
+[
+{
+"AA_YMD": "20261017",
+"EVENT_NM": "토요휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20261022",
+"EVENT_NM": "재량휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "N",
+"THREE_GRADE_EVENT_YN": "N"
+},
+{
+"AA_YMD": "20261024",
+"EVENT_NM": "토요휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20261031",
+"EVENT_NM": "토요휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20261102",
+"EVENT_NM": "재량휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "N",
+"THREE_GRADE_EVENT_YN": "N"
+},
+{
+"AA_YMD": "20261107",
+"EVENT_NM": "토요휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20261114",
+"EVENT_NM": "토요휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20261119",
+"EVENT_NM": "재량휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20261120",
+"EVENT_NM": "재량휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20261121",
+"EVENT_NM": "토요휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20261128",
+"EVENT_NM": "토요휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20261205",
+"EVENT_NM": "토요휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20261212",
+"EVENT_NM": "토요휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20261219",
+"EVENT_NM": "토요휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20261221",
+"EVENT_NM": "재량휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20261222",
+"EVENT_NM": "재량휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20261223",
+"EVENT_NM": "재량휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20261224",
+"EVENT_NM": "재량휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20261225",
+"EVENT_NM": "성탄절",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "공휴일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20261226",
+"EVENT_NM": "토요휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270101",
+"EVENT_NM": "신정",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "공휴일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270102",
+"EVENT_NM": "토요휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270104",
+"EVENT_NM": "동계방학",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "N",
+"TW_GRADE_EVENT_YN": "N",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270105",
+"EVENT_NM": "동계방학",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "N",
+"TW_GRADE_EVENT_YN": "N",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270106",
+"EVENT_NM": "동계방학",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "N",
+"TW_GRADE_EVENT_YN": "N",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270107",
+"EVENT_NM": "동계방학",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "N",
+"TW_GRADE_EVENT_YN": "N",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270108",
+"EVENT_NM": "동계방학",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270109",
+"EVENT_NM": "토요휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270111",
+"EVENT_NM": "동계방학",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270112",
+"EVENT_NM": "동계방학",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270113",
+"EVENT_NM": "동계방학",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270114",
+"EVENT_NM": "동계방학",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270115",
+"EVENT_NM": "동계방학",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270116",
+"EVENT_NM": "토요휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270118",
+"EVENT_NM": "동계방학",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270119",
+"EVENT_NM": "동계방학",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270120",
+"EVENT_NM": "동계방학",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270121",
+"EVENT_NM": "동계방학",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270122",
+"EVENT_NM": "동계방학",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270123",
+"EVENT_NM": "토요휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270125",
+"EVENT_NM": "동계방학",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270126",
+"EVENT_NM": "동계방학",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270127",
+"EVENT_NM": "동계방학",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270128",
+"EVENT_NM": "동계방학",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270129",
+"EVENT_NM": "동계방학",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270130",
+"EVENT_NM": "토요휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270206",
+"EVENT_NM": "설연휴",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "공휴일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270206",
+"EVENT_NM": "설날",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "공휴일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270206",
+"EVENT_NM": "토요휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270207",
+"EVENT_NM": "설날",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "공휴일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270208",
+"EVENT_NM": "설연휴",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "공휴일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270208",
+"EVENT_NM": "설날",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "공휴일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270209",
+"EVENT_NM": "대체공휴일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "공휴일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270213",
+"EVENT_NM": "토요휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270220",
+"EVENT_NM": "토요휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+},
+{
+"AA_YMD": "20270227",
+"EVENT_NM": "토요휴업일",
+"EVENT_CNTNT": "",
+"SBTR_DD_SC_NM": "휴업일",
+"ONE_GRADE_EVENT_YN": "Y",
+"TW_GRADE_EVENT_YN": "Y",
+"THREE_GRADE_EVENT_YN": "Y"
+}
+]

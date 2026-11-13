@@ -8,6 +8,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { DatabaseSync } = require('node:sqlite');
 const { createNews } = require('./news.js');
+const { createCalendar, toIcs } = require('./calendar.js');
 
 // ---------------------------------------------------------------------------
 // 설정 (환경변수로 변경)
@@ -206,6 +207,22 @@ if (process.env.NEWS_SOURCES && getSetting('news_sources', '') === '') {
   try {
     news.setSources(process.env.NEWS_SOURCES.split(',').map((x) => { const [name, ...u] = x.split('|'); return { name, url: u.join('|') }; }));
   } catch (e) { console.warn('NEWS_SOURCES 설정 오류:', e.message); }
+}
+
+// ---------------------------------------------------------------------------
+// 학사일정 (나이스 연동 + 운영자 등록)
+// ---------------------------------------------------------------------------
+const calendar = createCalendar({ db, getSetting, setSetting });
+if (getSetting('neis', '') === '') {
+  // 기본값: 동탄국제고등학교 (경기도교육청 J10 / 학교코드 7530976). 환경변수로 변경 가능.
+  calendar.setConfig({
+    office: process.env.NEIS_OFFICE || 'J10',
+    school: process.env.NEIS_SCHOOL || '7530976',
+    schoolName: process.env.NEIS_SCHOOL_NAME || '동탄국제고등학교',
+    key: process.env.NEIS_KEY || '',
+  });
+} else if (process.env.NEIS_KEY && !calendar.getConfig().key) {
+  calendar.setConfig({ key: process.env.NEIS_KEY });
 }
 
 // ---------------------------------------------------------------------------
@@ -617,6 +634,61 @@ route('POST', '/api/admin/news/refresh', async (req, res) => {
   send(res, 200, { status: await news.refresh() });
 }, { admin: true });
 
+// --- 학사일정 ---
+const isDate = (v) => /^\d{4}-\d{2}-\d{2}$/.test(v || '');
+route('GET', '/api/events', (req, res, s, body, ip, params, url) => {
+  const from = url.searchParams.get('from');
+  const to = url.searchParams.get('to');
+  send(res, 200, { events: calendar.list({ from: isDate(from) ? from : undefined, to: isDate(to) ? to : undefined }) });
+});
+
+route('GET', '/api/events/upcoming', (req, res, s, body, ip, params, url) => {
+  send(res, 200, { events: calendar.upcoming(Math.min(10, Number(url.searchParams.get('limit')) || 5)) });
+});
+
+route('GET', '/api/events/:id/ics', (req, res, s, body, ip, { id }) => {
+  const ev = calendar.get(id);
+  if (!ev) return fail(res, 404, '일정을 찾을 수 없습니다.');
+  res.writeHead(200, {
+    'Content-Type': 'text/calendar; charset=utf-8',
+    'Content-Disposition': `attachment; filename="event-${id}.ics"`,
+    'Cache-Control': 'no-store',
+    ...SECURITY_HEADERS,
+  });
+  res.end(toIcs(ev, CONFIG.schoolName.replace(/\s*학부모.*$/, '')));
+});
+
+route('GET', '/api/admin/calendar', (req, res) => {
+  const { key, ...cfg } = calendar.getConfig();
+  send(res, 200, { config: { ...cfg, hasKey: !!key, keyHint: key ? key.slice(0, 4) + '…' : '' }, status: calendar.getStatus(), manual: calendar.list({ from: '2000-01-01', to: '2100-12-31' }).filter((e) => e.source === 'manual') });
+}, { admin: true });
+
+route('POST', '/api/admin/calendar/config', (req, res, s, body) => {
+  try {
+    const cfg = calendar.setConfig({ office: body.office, school: body.school, schoolName: body.schoolName, key: typeof body.key === 'string' ? body.key : undefined });
+    send(res, 200, { ok: true, school: cfg.schoolName });
+  } catch (e) { fail(res, 400, e.message); }
+}, { admin: true });
+
+route('POST', '/api/admin/calendar/sync', async (req, res) => {
+  send(res, 200, { status: await calendar.sync() });
+}, { admin: true });
+
+route('GET', '/api/admin/calendar/search', async (req, res, s, body, ip, params, url) => {
+  const q = (url.searchParams.get('q') || '').trim();
+  if (q.length < 2) return fail(res, 400, '학교 이름을 2자 이상 입력해주세요.');
+  try { send(res, 200, { schools: await calendar.searchSchools(q) }); } catch (e) { fail(res, 502, '나이스 조회 실패: ' + (e.cause?.code || e.message)); }
+}, { admin: true });
+
+route('POST', '/api/admin/events', (req, res, s, body) => {
+  try { send(res, 201, { id: calendar.addManual(body) }); } catch (e) { fail(res, 400, e.message); }
+}, { admin: true });
+
+route('DELETE', '/api/admin/events/:id', (req, res, s, body, ip, { id }) => {
+  if (!calendar.removeManual(id)) return fail(res, 404, '직접 등록한 일정만 삭제할 수 있습니다.');
+  send(res, 200, { ok: true });
+}, { admin: true });
+
 // ---------------------------------------------------------------------------
 // 서버
 // ---------------------------------------------------------------------------
@@ -655,6 +727,7 @@ const server = http.createServer(async (req, res) => {
 
 if (require.main === module) {
   news.start(Number(process.env.NEWS_INTERVAL_MIN || 30));
+  calendar.start(Number(process.env.NEIS_INTERVAL_HOURS || 6));
   server.listen(CONFIG.port, process.env.HOST || undefined, () => { // HOST=127.0.0.1 이면 내부(웹서버 경유)에서만 접근
     console.log(`[${CONFIG.schoolName}] http://localhost:${CONFIG.port}`);
     if (!process.env.ACCESS_CODE || !process.env.ADMIN_PASSWORD) {
@@ -663,4 +736,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { server, db, sanitizeText, news };
+module.exports = { server, db, sanitizeText, news, calendar };

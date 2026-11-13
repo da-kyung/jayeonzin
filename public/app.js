@@ -166,11 +166,11 @@ function viewEnter() {
 
 // ---------- 화면: 대화 목록 (홈 / 공지 / 내 활동) ----------
 async function viewList(mode = 'home') {
-  setNav(mode);
+  setNav(mode === 'mine' ? 'more' : mode);
   const cats = state.me.categories;
   const titles = { home: null, notice: '공지사항', mine: '내 활동' };
   const searchToggle = mode === 'home' && h('button', { class: 'icon-btn', 'aria-label': '검색', onclick: () => { state.showSearch = !state.showSearch; viewList(mode); } }, '🔍');
-  topbar({ title: titles[mode], right: searchToggle });
+  topbar({ title: titles[mode], back: mode === 'mine', right: searchToggle });
 
   const parts = [];
   if (mode === 'home') {
@@ -196,8 +196,10 @@ async function viewList(mode = 'home') {
   const list = h('ul', { class: 'room-list' }, h('li', { class: 'empty' }, '불러오는 중…'));
   const more = h('div', { class: 'center' });
   const newsBanner = h('div', {});
+  const eventStrip = h('div', {});
+  if (mode === 'home' && !state.q) parts.unshift(eventStrip);
   render(...parts, newsBanner, pinnedBox, mode === 'notice' && h('div', { class: 'section-title' }, '📢 소통방 공지'), list, more);
-  if (mode === 'home' && !state.q) recentNewsBanner(newsBanner);
+  if (mode === 'home' && !state.q) { recentNewsBanner(newsBanner); upcomingStrip(eventStrip); }
 
   let page = 1;
   const load = async () => {
@@ -227,6 +229,175 @@ async function viewList(mode = 'home') {
     } catch (e) { handleError(e); }
   };
   load();
+}
+
+// ---------- 학사일정 ----------
+const kstToday = () => new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
+const dayDiff = (a, b) => Math.round((new Date(b + 'T00:00:00Z') - new Date(a + 'T00:00:00Z')) / 86400_000);
+const WD = '일월화수목금토';
+function fmtDay(d, withWd = true) {
+  const t = new Date(d + 'T00:00:00Z');
+  return `${t.getUTCMonth() + 1}.${t.getUTCDate()}${withWd ? `(${WD[t.getUTCDay()]})` : ''}`;
+}
+function fmtRange(e) { return e.start === e.end ? fmtDay(e.start) : `${fmtDay(e.start)} ~ ${fmtDay(e.end)}`; }
+function dday(e) {
+  const t = kstToday();
+  if (e.start <= t && t <= e.end) return { text: '진행 중', cls: 'now' };
+  const n = dayDiff(t, e.start);
+  if (n < 0) return { text: '지남', cls: 'past' };
+  return { text: n === 0 ? 'D-DAY' : `D-${n}`, cls: n <= 3 ? 'soon' : '' };
+}
+const gradeTag = (e) => e.grades && h('span', { class: 'tag grade' }, e.grades.split(',').join('·') + '학년');
+
+async function upcomingStrip(box) {
+  try {
+    const { events } = await api('GET', '/api/events/upcoming?limit=6');
+    if (!events.length) return;
+    box.replaceChildren(h('div', { class: 'ev-strip' },
+      h('a', { class: 'ev-strip-head', href: '#/calendar' }, h('b', {}, '📅 다가오는 일정'), h('span', {}, '전체 ›')),
+      h('div', { class: 'ev-cards' }, events.map((e) => {
+        const dd = dday(e);
+        return h('a', { class: 'ev-card' + (e.holiday ? ' holiday' : ''), href: `#/calendar/${e.start.slice(0, 7)}/${e.start}` },
+          h('span', { class: 'dday ' + dd.cls }, dd.text),
+          h('span', { class: 'ev-card-date' }, fmtRange(e)),
+          h('span', { class: 'ev-card-title' }, e.title),
+          gradeTag(e));
+      }))));
+  } catch { /* 무시 */ }
+}
+
+function eventRow(e) {
+  const dd = dday(e);
+  return h('li', { class: 'ev-row' + (e.holiday ? ' holiday' : '') + (dd.cls === 'past' ? ' past' : '') },
+    h('div', { class: 'ev-date' }, h('b', {}, fmtDay(e.start, false)), h('span', {}, WD[new Date(e.start + 'T00:00:00Z').getUTCDay()]),
+      e.end !== e.start && h('em', {}, `~${fmtDay(e.end, false)}`)),
+    h('div', { class: 'ev-main' },
+      h('div', { class: 'ev-title' }, e.title),
+      h('div', { class: 'ev-tags' },
+        h('span', { class: 'dday ' + dd.cls }, dd.text),
+        e.holiday && h('span', { class: 'tag warn' }, '휴업일'),
+        gradeTag(e),
+        h('span', { class: 'tag src' }, e.source === 'neis' ? '학교(나이스)' : '운영진 등록')),
+      e.detail && h('div', { class: 'ev-detail' }, e.detail)),
+    h('div', { class: 'ev-actions' },
+      h('a', { class: 'ev-btn', href: `/api/events/${e.id}/ics`, title: '내 휴대폰 캘린더에 추가', 'aria-label': '캘린더에 추가' }, '＋📅'),
+      h('button', { class: 'ev-btn', title: '이 일정으로 이야기 나누기', onclick: () => {
+        state.prefill = { category: 'question', title: `[일정] ${e.title} (${fmtRange(e)})`.slice(0, 100), body: '' };
+        location.hash = '#/write';
+      } }, '💬')));
+}
+
+async function viewCalendar(month, selected) {
+  setNav('calendar');
+  topbar({ title: '학사 일정' });
+  const today = kstToday();
+  month = /^\d{4}-\d{2}$/.test(month || '') ? month : today.slice(0, 7);
+  const [y, m] = month.split('-').map(Number);
+  const first = `${month}-01`;
+  const days = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const last = `${month}-${String(days).padStart(2, '0')}`;
+  const shift = (n) => { const d = new Date(Date.UTC(y, m - 1 + n, 1)); return d.toISOString().slice(0, 7); };
+
+  let events = [];
+  try { ({ events } = await api('GET', `/api/events?from=${first}&to=${last}`)); } catch (e) { handleError(e); return; }
+
+  // 날짜별 일정 표시
+  const byDay = {};
+  for (const e of events) for (let d = e.start < first ? first : e.start; d <= e.end && d <= last; d = addDay(d)) (byDay[d] ||= []).push(e);
+
+  const lead = new Date(first + 'T00:00:00Z').getUTCDay();
+  const cells = [];
+  for (let i = 0; i < lead; i++) cells.push(h('div', { class: 'cal-cell empty' }));
+  for (let i = 1; i <= days; i++) {
+    const d = `${month}-${String(i).padStart(2, '0')}`;
+    const evs = byDay[d] || [];
+    const wd = (lead + i - 1) % 7;
+    cells.push(h('button', {
+      class: 'cal-cell' + (d === today ? ' today' : '') + (d === selected ? ' sel' : '') + (wd === 0 || evs.some((e) => e.holiday) ? ' red' : wd === 6 ? ' blue' : ''),
+      onclick: () => { location.hash = d === selected ? `#/calendar/${month}` : `#/calendar/${month}/${d}`; },
+    }, h('span', { class: 'cal-num' }, i), evs.length > 0 && h('span', { class: 'cal-dots' }, evs.slice(0, 3).map((e) => h('i', { class: e.holiday ? 'h' : e.source === 'manual' ? 'm' : '' })))));
+  }
+
+  const shown = selected ? (byDay[selected] || []) : events;
+  const listTitle = selected ? `${fmtDay(selected)} 일정` : `${m}월 일정 ${events.length}건`;
+
+  render(
+    h('section', { class: 'cal' },
+      h('div', { class: 'cal-head' },
+        h('a', { class: 'icon-btn', href: `#/calendar/${shift(-1)}`, 'aria-label': '이전 달' }, '‹'),
+        h('b', {}, `${y}년 ${m}월`),
+        h('a', { class: 'icon-btn', href: `#/calendar/${shift(1)}`, 'aria-label': '다음 달' }, '›'),
+        month !== today.slice(0, 7) && h('a', { class: 'chip small', href: '#/calendar' }, '오늘')),
+      h('div', { class: 'cal-grid wd' }, [...WD].map((w, i) => h('div', { class: 'cal-wd' + (i === 0 ? ' red' : i === 6 ? ' blue' : '') }, w))),
+      h('div', { class: 'cal-grid' }, cells),
+      h('div', { class: 'cal-legend' }, h('span', {}, h('i', { class: 'h' }), '휴업·방학'), h('span', {}, h('i', {}), '학교 일정'), h('span', {}, h('i', { class: 'm' }), '운영진 등록'))),
+    h('div', { class: 'section-title' }, listTitle),
+    shown.length ? h('ul', { class: 'ev-list' }, shown.map(eventRow)) : h('p', { class: 'hint center' }, selected ? '이 날은 등록된 일정이 없어요.' : '이 달에는 등록된 일정이 없어요.'),
+    h('p', { class: 'hint' }, '학교가 나이스(NEIS)에 등록한 학사일정이 자동으로 반영돼요. ＋📅 를 누르면 내 휴대폰 캘린더에 추가돼요.'),
+  );
+}
+const addDay = (d) => new Date(new Date(d + 'T00:00:00Z').getTime() + 86400_000).toISOString().slice(0, 10);
+
+async function calendarAdminPanel() {
+  const panel = h('section', { class: 'panel' });
+  const load = async () => {
+    let d;
+    try { d = await api('GET', '/api/admin/calendar'); } catch (e) { handleError(e); return; }
+    const st = d.status || {};
+    const key = h('input', { class: 'input', placeholder: d.config.hasKey ? `등록됨 (${d.config.keyHint}) · 바꾸려면 새 키 입력` : '나이스 인증키 (선택, 없어도 동작)' });
+    const q = h('input', { class: 'input', placeholder: '학교 이름 검색 (예: 동탄국제)' });
+    const results = h('div', { class: 'school-results' });
+    const start = h('input', { class: 'input', type: 'date' });
+    const end = h('input', { class: 'input', type: 'date' });
+    const title = h('input', { class: 'input', maxlength: 60, placeholder: '일정 이름 (예: 2학기 기말고사)' });
+    const detail = h('input', { class: 'input', maxlength: 200, placeholder: '설명 (선택)' });
+    const gradeChks = ['1', '2', '3'].map((g) => h('input', { type: 'checkbox', value: g }));
+    const saveCfg = async (extra) => {
+      try { await api('POST', '/api/admin/calendar/config', extra); toast('저장했습니다. 일정을 가져오는 중…'); await api('POST', '/api/admin/calendar/sync'); load(); }
+      catch (e) { toast(e.message); }
+    };
+    panel.replaceChildren(...[
+      h('h3', {}, '📅 학사일정'),
+      h('p', { class: 'small' }, h('b', {}, d.config.schoolName || '학교 미설정'), h('span', { class: 'muted' }, ` · 교육청 ${d.config.office || '-'} / 학교코드 ${d.config.school || '-'}`)),
+      st.at && h('p', { class: 'small ' + (st.ok ? 'ok-text' : 'warn-text') },
+        st.ok ? `✓ 나이스 연동됨 · ${new Date(st.at).toLocaleString('ko-KR')} · 일정 ${st.count}건 (${st.mode})` : `✕ 실패 · ${new Date(st.at).toLocaleString('ko-KR')} · ${st.error}`),
+      h('div', { class: 'actions' }, h('button', { class: 'btn small', onclick: async () => { toast('가져오는 중…'); await api('POST', '/api/admin/calendar/sync'); load(); } }, '지금 다시 가져오기')),
+      h('details', {}, h('summary', {}, '연동 설정 (학교 변경 · 인증키)'),
+        h('div', { class: 'promo-form' },
+          h('div', { class: 'inline' }, q, h('button', { class: 'btn small', onclick: async () => {
+            try {
+              const r = await api('GET', '/api/admin/calendar/search?q=' + encodeURIComponent(q.value));
+              results.replaceChildren(...(r.schools.length ? r.schools.map((sc) => h('button', { class: 'school-pick', onclick: () => saveCfg({ office: sc.office, school: sc.code, schoolName: sc.name }) },
+                h('b', {}, sc.name), h('span', {}, `${sc.officeName} · ${sc.address}`))) : [h('p', { class: 'muted small' }, '검색 결과가 없어요.')]));
+            } catch (e) { toast(e.message); }
+          } }, '검색')),
+          results,
+          h('p', { class: 'muted small' }, '인증키가 없으면 여러 번 나눠 조회합니다(느리지만 동작). open.neis.go.kr 에서 무료로 발급받아 넣으면 한 번에 가져옵니다.'),
+          h('div', { class: 'inline' }, key, h('button', { class: 'btn small', onclick: () => saveCfg({ key: key.value }) }, '키 저장')))),
+      h('h4', {}, '직접 등록한 일정'),
+      h('p', { class: 'muted small' }, '나이스에 없는 시험·설명회·학부모회 행사 등을 추가하세요.'),
+      h('form', { class: 'promo-form', onsubmit: async (e) => {
+        e.preventDefault();
+        try {
+          await api('POST', '/api/admin/events', { start: start.value, end: end.value || start.value, title: title.value, detail: detail.value, grades: gradeChks.filter((c) => c.checked).map((c) => c.value).join(',') });
+          toast('일정을 추가했습니다.');
+          load();
+        } catch (err) { toast(err.message); }
+      } },
+      h('div', { class: 'inline' }, h('label', { class: 'mini' }, '시작일', start), h('label', { class: 'mini' }, '종료일(선택)', end)),
+      title, detail,
+      h('div', { class: 'grade-chks' }, h('span', { class: 'muted small' }, '대상 학년 (선택 안 하면 전체)'), gradeChks.map((c) => h('label', { class: 'chk' }, c, ` ${c.value}학년`))),
+      h('button', { class: 'btn primary' }, '일정 추가')),
+      d.manual.length > 0 && h('ul', { class: 'ev-list compact' }, d.manual.map((e) => h('li', { class: 'ev-admin' },
+        h('span', {}, `${fmtRange(e)} · ${e.title}${e.grades ? ` (${e.grades}학년)` : ''}`),
+        h('button', { class: 'link danger', onclick: async () => {
+          if (!confirm(`「${e.title}」 일정을 삭제할까요?`)) return;
+          try { await api('DELETE', `/api/admin/events/${e.id}`); load(); } catch (err) { handleError(err); }
+        } }, '삭제')))),
+    ].filter(Boolean));
+  };
+  load();
+  return panel;
 }
 
 // ---------- 학교 홈페이지 소식 (공지사항 · 가정통신문) ----------
@@ -636,6 +807,7 @@ async function viewMore() {
   setNav('more');
   topbar({ title: '더보기' });
   const sections = [
+    h('a', { class: 'panel link-panel', href: '#/mine' }, h('span', {}, '🙋 내 활동'), h('span', { class: 'muted small' }, '내가 쓴 글 · 댓글 단 대화 ›')),
     state.me.promoEnabled && h('a', { class: 'panel link-panel', href: '#/local' }, h('span', {}, '🏘 지역·교육 정보'), h('span', { class: 'muted small' }, '공익 정보 · 제휴 소식 ›')),
     h('section', { class: 'panel' },
       h('h3', {}, '📋 이용 수칙'),
@@ -691,6 +863,7 @@ async function viewMore() {
         h('div', { class: 'text' }, c.body),
         c.reasons.length > 0 && h('div', { class: 'reasons' }, '사유: ' + c.reasons.join(' / ')),
         h('button', { class: 'btn small', onclick: () => adminCall(`/api/admin/comments/${c.id}/${c.hidden ? 'unhide' : 'hide'}`, viewMore) }, c.hidden ? '숨김 해제' : '숨기기'))) : h('p', { class: 'muted small' }, '없음')),
+    await calendarAdminPanel(),
     await newsAdminPanel(),
     await promoAdminPanel(),
     ...sections,
@@ -724,6 +897,7 @@ function route() {
   if (hash === '#/mine') return viewList('mine');
   if (hash === '#/more' || hash === '#/admin') return viewMore();
   if (hash === '#/local') return viewLocal();
+  if ((m = hash.match(/^#\/calendar(?:\/(\d{4}-\d{2}))?(?:\/(\d{4}-\d{2}-\d{2}))?$/))) return viewCalendar(m[1], m[2]);
   return viewList('home');
 }
 
